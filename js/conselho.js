@@ -625,9 +625,7 @@ function abrirModalNotas(alunoId) {
     if (media !== "-") {
       const notaNum = parseFloat(media);
       if (!isNaN(notaNum)) {
-        if (notaNum < 3) {
-          mediaClass = "nota-muito-baixa-cell";
-        } else if (notaNum < 5) {
+        if (notaNum < 5) {
           mediaClass = "nota-baixa-cell";
         }
       }
@@ -642,17 +640,6 @@ function abrirModalNotas(alunoId) {
     `;
   });
 
-  /* Antigo gerador de modal das notas
-  (cacheDisciplinas || []).forEach(d => {
-    const r = mapPorDisc.get(d.id);
-    html += `
-      <tr>
-        <td>${d.nome}</td>
-        <td class="text-center">${(r?.media ?? "-")}</td>
-        <td class="text-center">${(r?.faltas ?? "-")}</td>
-      </tr>
-    `;
-  });*/
 	//Novo Modal das notas
 	if ((cacheDisciplinas || []).length === 0 && registros.length > 0) {
     registros.forEach(r => {
@@ -664,11 +651,9 @@ function abrirModalNotas(alunoId) {
       if (media !== "-") {
         const notaNum = parseFloat(media);
         if (!isNaN(notaNum)) {
-          if (notaNum < 3) {
-            mediaClass = "nota-muito-baixa-cell";
-          } else if (notaNum < 5) {
+          if (notaNum < 5) {
             mediaClass = "nota-baixa-cell";
-          }
+          } 
         }
       }
       
@@ -682,20 +667,6 @@ function abrirModalNotas(alunoId) {
     });
   }
   
-  
-  /*Antigo Modal das notas
-	if ((cacheDisciplinas || []).length === 0 && registros.length > 0) {
-    registros.forEach(r => {
-      html += `
-        <tr>
-          <td>${r.disciplina_id}</td>
-          <td class="text-center">${(r?.media ?? "-")}</td>
-          <td class="text-center">${(r?.faltas ?? "-")}</td>
-        </tr>
-      `;
-    });
-  }*/
-
   html += `
         </tbody>
       </table>
