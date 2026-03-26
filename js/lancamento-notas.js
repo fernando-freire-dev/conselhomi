@@ -350,6 +350,7 @@ async function processarMapao(event) {
 		  setTimeout(() => {
 		    document.querySelectorAll("#corpoTabela .media").forEach(input => {
 		      aplicarDestaqueNota(input, input.value);
+				console.log("Reaplicando destaque:", input.value, input.className);
 		    });
 		  }, 200);
 		
