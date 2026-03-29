@@ -21,6 +21,93 @@
 -------------	Antigo Carregar Modals	-----------------
 */
 
+let alunoAtualIndex = -1;
+let contextoSelecaoAtual = null;
+
+const selecoesModal = {
+  dificuldade: [],
+  sala: [],
+  plataforma: []
+};
+
+function textoParaLista(texto) {
+  if (!texto) return [];
+  return texto.split(",").map(t => t.trim()).filter(Boolean);
+}
+
+function atualizarResumoSelecao(tipo) {
+  const mapa = {
+    dificuldade: "resumoDificuldade",
+    sala: "resumoSala",
+    plataforma: "resumoPlataforma"
+  };
+
+  const el = document.getElementById(mapa[tipo]);
+  if (!el) return;
+
+  const lista = selecoesModal[tipo] || [];
+
+  if (lista.length === 0) {
+    el.textContent = "Nenhuma disciplina selecionada";
+    return;
+  }
+
+  if (lista.length <= 3) {
+    el.textContent = lista.join(", ");
+    return;
+  }
+
+  el.textContent = `${lista.length} disciplinas selecionadas`;
+}
+
+function alternarAreaPorRadio(nomeRadio, areaId, valorQueMostra = "true") {
+  const selecionado = document.querySelector(`input[name="${nomeRadio}"]:checked`);
+  const area = document.getElementById(areaId);
+  if (!area) return;
+
+  area.classList.toggle("d-none", !selecionado || selecionado.value !== valorQueMostra);
+}
+
+function montarListaDisciplinasSelecao(tipo) {
+  const listaEl = document.getElementById("modalSelecionarDisciplinasLista");
+  if (!listaEl) return;
+
+  const disciplinas = window.cacheDisciplinas || [];
+  const selecionadas = selecoesModal[tipo] || [];
+
+  if (!disciplinas.length) {
+    listaEl.innerHTML = `<div class="text-muted">Nenhuma disciplina encontrada.</div>`;
+    return;
+  }
+
+  listaEl.innerHTML = disciplinas.map((disc, i) => {
+    const checked = selecionadas.includes(disc.nome) ? "checked" : "";
+    return `
+      <div class="form-check mb-2">
+        <input class="form-check-input chk-disciplina-selecao" type="checkbox"
+          id="disc_${tipo}_${i}" value="${disc.nome}" ${checked}>
+        <label class="form-check-label" for="disc_${tipo}_${i}">
+          ${disc.nome}
+        </label>
+      </div>
+    `;
+  }).join("");
+}
+
+function abrirModalSelecaoDisciplinas(tipo, titulo) {
+  contextoSelecaoAtual = tipo;
+
+  const tituloEl = document.getElementById("modalSelecionarDisciplinasTitulo");
+  if (tituloEl) tituloEl.textContent = titulo;
+
+  montarListaDisciplinasSelecao(tipo);
+
+  bootstrap.Modal.getOrCreateInstance(
+    document.getElementById("modalSelecionarDisciplinas")
+  ).show();
+}
+
+//Antigo inicio do arquivo
 (async function carregarModais() {
   try {
     const resp = await fetch("modals.html");
@@ -564,18 +651,19 @@ function abrirModalConselho(index) {
 
   const dificuldadeMarcada = linha.querySelector(".dificuldadeChk")?.checked || false;
   const dificuldadeTexto = linha.querySelector(".dificuldadeTxt")?.value || "";
-  const dificuldadeLista = textoParaLista(dificuldadeTexto);
 
   const fazSala = linha.querySelector(".selFazSala")?.value || "true";
   const salaTexto = linha.querySelector(".salaMateriasTxt")?.value || "";
-  const salaLista = textoParaLista(salaTexto);
 
   const fazPlataforma = linha.querySelector(".selFazPlataforma")?.value || "true";
   const plataformaTexto = linha.querySelector(".plataformaMateriasTxt")?.value || "";
-  const plataformaLista = textoParaLista(plataformaTexto);
 
   const indisciplinaMarcada = linha.querySelector(".indisciplinaChk")?.checked || false;
   const indisciplinaTexto = linha.querySelector(".indisciplinaTxt")?.value || "";
+
+  selecoesModal.dificuldade = textoParaLista(dificuldadeTexto);
+  selecoesModal.sala = textoParaLista(salaTexto);
+  selecoesModal.plataforma = textoParaLista(plataformaTexto);
 
   document.getElementById("modalDificuldadeSim").checked = dificuldadeMarcada;
   document.getElementById("modalDificuldadeNao").checked = !dificuldadeMarcada;
@@ -597,23 +685,17 @@ function abrirModalConselho(index) {
   document.getElementById("modalConcluido").checked =
     linha.querySelector(".concluidoSwitch")?.checked || false;
 
-  document.getElementById("modalDificuldadeDisciplinas").innerHTML =
-    listaDisciplinasModalHtml("modalDificuldadeDisciplinas", dificuldadeLista);
-
-  document.getElementById("modalSalaDisciplinas").innerHTML =
-    listaDisciplinasModalHtml("modalSalaDisciplinas", salaLista);
-
-  document.getElementById("modalPlataformaDisciplinas").innerHTML =
-    listaDisciplinasModalHtml("modalPlataformaDisciplinas", plataformaLista);
-
   alternarAreaPorRadio("modalDificuldade", "modalDificuldadeArea", "true");
   alternarAreaPorRadio("modalFazSala", "modalSalaArea", "false");
   alternarAreaPorRadio("modalFazPlataforma", "modalPlataformaArea", "false");
   alternarAreaPorRadio("modalIndisciplina", "modalIndisciplinaArea", "true");
 
-  const linhasTotal = linhas.length;
+  atualizarResumoSelecao("dificuldade");
+  atualizarResumoSelecao("sala");
+  atualizarResumoSelecao("plataforma");
+
   document.getElementById("btnAnterior").disabled = index === 0;
-  document.getElementById("btnProximo").disabled = index === linhasTotal - 1;
+  document.getElementById("btnProximo").disabled = index === linhas.length - 1;
 
   bootstrap.Modal.getOrCreateInstance(
     document.getElementById("modalConselhoAluno")
@@ -630,22 +712,19 @@ function salvarAlunoModalAtual() {
   const fazPlataforma = document.querySelector('input[name="modalFazPlataforma"]:checked')?.value || "true";
   const indisciplina = document.querySelector('input[name="modalIndisciplina"]:checked')?.value === "true";
 
-  const dificuldadeSelecionadas = obterSelecionadasPorClasse("modalDificuldadeDisciplinas-chk");
-  const salaSelecionadas = obterSelecionadasPorClasse("modalSalaDisciplinas-chk");
-  const plataformaSelecionadas = obterSelecionadasPorClasse("modalPlataformaDisciplinas-chk");
   const textoIndisciplina = document.getElementById("modalIndisciplinaTxt").value.trim();
 
-  if (dificuldade && dificuldadeSelecionadas.length === 0) {
+  if (dificuldade && selecoesModal.dificuldade.length === 0) {
     alert("Se marcar 'Tem dificuldade = Sim', selecione pelo menos uma disciplina.");
     return false;
   }
 
-  if (fazSala === "false" && salaSelecionadas.length === 0) {
+  if (fazSala === "false" && selecoesModal.sala.length === 0) {
     alert("Se marcar 'Faz atividade em sala = Não', selecione pelo menos uma disciplina.");
     return false;
   }
 
-  if (fazPlataforma === "false" && plataformaSelecionadas.length === 0) {
+  if (fazPlataforma === "false" && selecoesModal.plataforma.length === 0) {
     alert("Se marcar 'Faz plataformas = Não', selecione pelo menos uma disciplina.");
     return false;
   }
@@ -656,13 +735,13 @@ function salvarAlunoModalAtual() {
   }
 
   linha.querySelector(".dificuldadeChk").checked = dificuldade;
-  linha.querySelector(".dificuldadeTxt").value = dificuldade ? dificuldadeSelecionadas.join(", ") : "";
+  linha.querySelector(".dificuldadeTxt").value = dificuldade ? selecoesModal.dificuldade.join(", ") : "";
 
   linha.querySelector(".selFazSala").value = fazSala;
-  linha.querySelector(".salaMateriasTxt").value = fazSala === "false" ? salaSelecionadas.join(", ") : "";
+  linha.querySelector(".salaMateriasTxt").value = fazSala === "false" ? selecoesModal.sala.join(", ") : "";
 
   linha.querySelector(".selFazPlataforma").value = fazPlataforma;
-  linha.querySelector(".plataformaMateriasTxt").value = fazPlataforma === "false" ? plataformaSelecionadas.join(", ") : "";
+  linha.querySelector(".plataformaMateriasTxt").value = fazPlataforma === "false" ? selecoesModal.plataforma.join(", ") : "";
 
   linha.querySelector(".indisciplinaChk").checked = indisciplina;
   linha.querySelector(".indisciplinaTxt").value = indisciplina ? textoIndisciplina : "";
@@ -680,7 +759,46 @@ function salvarAlunoModalAtual() {
 }
 
 document.addEventListener("modalsLoaded", () => {
-  configurarEventosModalConselho();
+  document.querySelectorAll('input[name="modalDificuldade"]').forEach(el => {
+    el.addEventListener("change", () => alternarAreaPorRadio("modalDificuldade", "modalDificuldadeArea", "true"));
+  });
+
+  document.querySelectorAll('input[name="modalFazSala"]').forEach(el => {
+    el.addEventListener("change", () => alternarAreaPorRadio("modalFazSala", "modalSalaArea", "false"));
+  });
+
+  document.querySelectorAll('input[name="modalFazPlataforma"]').forEach(el => {
+    el.addEventListener("change", () => alternarAreaPorRadio("modalFazPlataforma", "modalPlataformaArea", "false"));
+  });
+
+  document.querySelectorAll('input[name="modalIndisciplina"]').forEach(el => {
+    el.addEventListener("change", () => alternarAreaPorRadio("modalIndisciplina", "modalIndisciplinaArea", "true"));
+  });
+
+  document.getElementById("btnSelecionarDificuldade")?.addEventListener("click", () => {
+    abrirModalSelecaoDisciplinas("dificuldade", "Selecionar disciplinas com dificuldade");
+  });
+
+  document.getElementById("btnSelecionarSala")?.addEventListener("click", () => {
+    abrirModalSelecaoDisciplinas("sala", "Selecionar disciplinas sem atividade em sala");
+  });
+
+  document.getElementById("btnSelecionarPlataforma")?.addEventListener("click", () => {
+    abrirModalSelecaoDisciplinas("plataforma", "Selecionar disciplinas sem plataformas");
+  });
+
+  document.getElementById("btnConfirmarDisciplinas")?.addEventListener("click", () => {
+    if (!contextoSelecaoAtual) return;
+
+    const marcadas = Array.from(
+      document.querySelectorAll(".chk-disciplina-selecao:checked")
+    ).map(el => el.value);
+
+    selecoesModal[contextoSelecaoAtual] = marcadas;
+    atualizarResumoSelecao(contextoSelecaoAtual);
+
+    bootstrap.Modal.getInstance(document.getElementById("modalSelecionarDisciplinas"))?.hide();
+  });
 
   document.getElementById("btnSalvarAluno")?.addEventListener("click", () => {
     const salvou = salvarAlunoModalAtual();
