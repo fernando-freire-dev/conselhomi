@@ -18,7 +18,7 @@
     console.warn("modals.js: não foi possível carregar modals.html →", err.message);
   }
 })();
--------------	Antigo Carregar Modals	-------------------
+-------------	Antigo Carregar Modals	-----------------
 */
 
 (async function carregarModais() {
