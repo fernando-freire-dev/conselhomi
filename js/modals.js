@@ -739,6 +739,80 @@ function salvarAlunoModalAtual() {
     return false;
   }
 
+  function atualizarResumoVisualLinha(linha) {
+  if (!linha) return;
+
+  const difTem = linha.querySelector(".dificuldadeChk")?.checked || false;
+  const difMat = linha.querySelector(".dificuldadeTxt")?.value?.trim() || "";
+
+  const fazSala = linha.querySelector(".selFazSala")?.value === "true";
+  const salaMat = linha.querySelector(".salaMateriasTxt")?.value?.trim() || "";
+
+  const fazPlat = linha.querySelector(".selFazPlataforma")?.value === "true";
+  const platMat = linha.querySelector(".plataformaMateriasTxt")?.value?.trim() || "";
+
+  const indTem = linha.querySelector(".indisciplinaChk")?.checked || false;
+  const proficiencia = linha.querySelector(".proficiencia")?.value || "";
+  const concluido = linha.querySelector(".concluidoSwitch")?.checked || false;
+
+  const badges = [];
+
+  if (difTem) {
+    const qtdDif = difMat
+      ? difMat.split(",").map(t => t.trim()).filter(Boolean).length
+      : 0;
+    badges.push(
+      `<span class="badge text-bg-warning text-dark me-1 mb-1">Dificuldade${qtdDif > 0 ? ` (${qtdDif})` : ""}</span>`
+    );
+  }
+
+  if (!fazSala) {
+    const qtdSala = salaMat
+      ? salaMat.split(",").map(t => t.trim()).filter(Boolean).length
+      : 0;
+    badges.push(
+      `<span class="badge text-bg-secondary me-1 mb-1">Sem atividade${qtdSala > 0 ? ` (${qtdSala})` : ""}</span>`
+    );
+  }
+
+  if (!fazPlat) {
+    const qtdPlat = platMat
+      ? platMat.split(",").map(t => t.trim()).filter(Boolean).length
+      : 0;
+    badges.push(
+      `<span class="badge text-bg-info me-1 mb-1">Sem plataforma${qtdPlat > 0 ? ` (${qtdPlat})` : ""}</span>`
+    );
+  }
+
+  if (indTem) {
+    badges.push(
+      `<span class="badge text-bg-danger me-1 mb-1">Indisciplina</span>`
+    );
+  }
+
+  const resumoHtml = badges.length
+    ? badges.join("")
+    : `<span class="text-muted small">Sem apontamentos</span>`;
+
+  const proficienciaHtml = proficiencia
+    ? `<span>${proficiencia}</span>`
+    : `<span class="text-muted">-</span>`;
+
+  const statusHtml = `
+    <span class="badge status-badge ${concluido ? "text-bg-success" : "text-bg-secondary"}">
+      ${concluido ? "Concluído" : "Pendente"}
+    </span>
+  `;
+
+  const tdResumo = linha.querySelector(".cell-resumo");
+  const tdProficiencia = linha.querySelector(".cell-proficiencia");
+  const tdStatus = linha.querySelector(".cell-status");
+
+  if (tdResumo) tdResumo.innerHTML = resumoHtml;
+  if (tdProficiencia) tdProficiencia.innerHTML = proficienciaHtml;
+  if (tdStatus) tdStatus.innerHTML = statusHtml;
+}
+
   linha.querySelector(".dificuldadeChk").checked = dificuldade;
   linha.querySelector(".dificuldadeTxt").value = dificuldade ? selecoesModal.dificuldade.join(", ") : "";
   
@@ -759,6 +833,7 @@ function salvarAlunoModalAtual() {
   
   atualizarStatusLinha(linha);
   atualizarContadoresTabela();
+  atualizarResumoVisualLinha(linha);
   
   return true;
 }
