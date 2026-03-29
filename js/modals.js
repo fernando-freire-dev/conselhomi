@@ -639,7 +639,7 @@ function configurarEventosModalConselho() {
   });
 }
 
-function abrirModalConselho(index) {
+window.abrirModalConselho = function(index) {
   const linhas = document.querySelectorAll("#corpoTabela tr");
   alunoAtualIndex = index;
 
