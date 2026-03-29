@@ -394,6 +394,7 @@ async function montarTabelaAlunos(turmaId, bimestre) {
   ).values()];
 
   window.cacheDisciplinas = disciplinasUnicas;
+  console.log("Disciplinas carregadas:", window.cacheDisciplinas);
 
   // Alunos - ordenação pela chamada
   const { data: alunos, error: errAlunos } = await supabaseClient
@@ -432,10 +433,12 @@ async function montarTabelaAlunos(turmaId, bimestre) {
   }
 
   window.cacheNotasPorAluno = {};
-  (notas || []).forEach(n => {
-    if (!cacheNotasPorAluno[n.aluno_id]) window.cacheNotasPorAluno[n.aluno_id] = [];
-    window.cacheNotasPorAluno[n.aluno_id].push(n);
-  });
+	(notas || []).forEach(n => {
+	  if (!window.cacheNotasPorAluno[n.aluno_id]) {
+	    window.cacheNotasPorAluno[n.aluno_id] = [];
+	  }
+	  window.cacheNotasPorAluno[n.aluno_id].push(n);
+	});
 
   // Dados do conselho já salvos
   const { data: dadosConselho, error: errConselho } = await supabaseClient
@@ -600,7 +603,7 @@ function abrirModalNotas(alunoId) {
   const nomeAluno = linha?.querySelector(".col-aluno")?.innerText || linha?.querySelector("td:nth-child(2)")?.innerText || "Aluno";
   if (tituloEl) tituloEl.innerText = `Notas - ${nomeAluno}`;
 
-  const registros = cacheNotasPorAluno[alunoId] || [];
+  const registros = window.cacheNotasPorAluno?.[alunoId] || [];
   const mapPorDisc = new Map();
   registros.forEach(r => mapPorDisc.set(r.disciplina_id, r));
 
@@ -618,33 +621,30 @@ function abrirModalNotas(alunoId) {
   `;
   
   //Novo Bloco de Geração de modal das notas
-  (cacheDisciplinas || []).forEach(d => {
-    const r = mapPorDisc.get(d.id);
-    const media = r?.media ?? "-";
-    const faltas = r?.faltas ?? "-";
-    
-    // ⭐ NOVO: Determinar classe de destaque para a média
-    let mediaClass = "";
-    if (media !== "-") {
-      const notaNum = parseFloat(media);
-      if (!isNaN(notaNum)) {
-        if (notaNum < 5) {
-          mediaClass = "nota-baixa-cell";
-        }
-      }
-    }
-    
-    html += `
-      <tr>
-        <td>${d.nome}</td>
-        <td class="text-center ${mediaClass}">${media}</td>
-        <td class="text-center">${faltas}</td>
-      </tr>
-    `;
-  });
+  (window.cacheDisciplinas || []).forEach(d => {
+	  const r = mapPorDisc.get(d.id);
+	  const media = r?.media ?? "-";
+	  const faltas = r?.faltas ?? "-";
+	  
+	  let mediaClass = "";
+	  if (media !== "-") {
+	    const notaNum = parseFloat(media);
+	    if (!isNaN(notaNum) && notaNum < 5) {
+	      mediaClass = "nota-baixa-cell";
+	    }
+	  }
+	  
+	  html += `
+	    <tr>
+	      <td>${d.nome}</td>
+	      <td class="text-center ${mediaClass}">${media}</td>
+	      <td class="text-center">${faltas}</td>
+	    </tr>
+	  `;
+	});
 
 	//Novo Modal das notas
-	if ((cacheDisciplinas || []).length === 0 && registros.length > 0) {
+	if ((window.cacheDisciplinas || []).length === 0 && registros.length > 0) {
     registros.forEach(r => {
       const media = r?.media ?? "-";
       const faltas = r?.faltas ?? "-";
