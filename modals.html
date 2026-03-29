@@ -187,4 +187,87 @@
   </div>
 </div>
 
+<!-- ── Modal do Conselho para substituir a tabela atual, assim teremos foco no aluno na hora do conselho ──────── -->
+
+<div class="modal fade" id="modalConselhoAluno" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 id="modalAlunoTitulo" class="modal-title"></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+
+        <!-- DIFICULDADE -->
+        <div class="mb-3">
+          <div class="form-check">
+            <input type="checkbox" id="modalDificuldadeChk" class="form-check-input">
+            <label class="form-check-label">Tem dificuldade</label>
+          </div>
+          <textarea id="modalDificuldadeTxt" class="form-control mt-2 d-none"></textarea>
+        </div>
+
+        <!-- SALA -->
+        <div class="mb-3">
+          <label>Faz atividade em sala?</label>
+          <select id="modalFazSala" class="form-select">
+            <option value="true">Faz</option>
+            <option value="false">Não faz</option>
+          </select>
+          <textarea id="modalSalaTxt" class="form-control mt-2 d-none"></textarea>
+        </div>
+
+        <!-- PLATAFORMA -->
+        <div class="mb-3">
+          <label>Faz plataformas?</label>
+          <select id="modalFazPlataforma" class="form-select">
+            <option value="true">Faz</option>
+            <option value="false">Não faz</option>
+          </select>
+          <textarea id="modalPlataformaTxt" class="form-control mt-2 d-none"></textarea>
+        </div>
+
+        <!-- INDISCIPLINA -->
+        <div class="mb-3">
+          <div class="form-check">
+            <input type="checkbox" id="modalIndisciplinaChk" class="form-check-input">
+            <label class="form-check-label">Indisciplina</label>
+          </div>
+          <textarea id="modalIndisciplinaTxt" class="form-control mt-2 d-none"></textarea>
+        </div>
+
+        <!-- PROFICIÊNCIA -->
+        <div class="mb-3">
+          <label>Proficiência</label>
+          <select id="modalProficiencia" class="form-select">
+            <option value="">Selecione</option>
+            <option>Abaixo do Básico</option>
+            <option>Básico</option>
+            <option>Proficiente</option>
+          </select>
+        </div>
+
+        <!-- CONCLUÍDO -->
+        <div class="form-check form-switch">
+          <input type="checkbox" id="modalConcluido" class="form-check-input">
+          <label>Concluído</label>
+        </div>
+
+      </div>
+
+      <div class="modal-footer d-flex justify-content-between">
+        <div>
+          <button class="btn btn-secondary" id="btnAnterior">Anterior</button>
+          <button class="btn btn-secondary" id="btnProximo">Próximo</button>
+        </div>
+
+        <button class="btn btn-success" id="btnSalvarAluno">Salvar</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 <!-- ── Adicione novos modais globais abaixo desta linha ──────── -->
