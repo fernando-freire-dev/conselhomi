@@ -494,3 +494,95 @@ async function removerVinculoDisciplina(id) {
     listarDisciplinasDaTurma();
   }
 }
+
+//Função para abrir o modal de destaque do conselho dos alunos
+let alunoAtualIndex = -1;
+
+function abrirModalConselho(index) {
+  const linhas = document.querySelectorAll("#corpoTabela tr");
+  alunoAtualIndex = index;
+
+  const linha = linhas[index];
+  if (!linha) return;
+
+  const nome = linha.querySelector(".col-aluno")?.innerText || "";
+
+  document.getElementById("modalAlunoTitulo").innerText = nome;
+
+  // preencher campos
+  document.getElementById("modalDificuldadeChk").checked =
+    linha.querySelector(".dificuldadeChk")?.checked || false;
+
+  document.getElementById("modalDificuldadeTxt").value =
+    linha.querySelector(".dificuldadeTxt")?.value || "";
+
+  document.getElementById("modalFazSala").value =
+    linha.querySelector(".selFazSala")?.value || "true";
+
+  document.getElementById("modalSalaTxt").value =
+    linha.querySelector(".salaMateriasTxt")?.value || "";
+
+  document.getElementById("modalFazPlataforma").value =
+    linha.querySelector(".selFazPlataforma")?.value || "true";
+
+  document.getElementById("modalPlataformaTxt").value =
+    linha.querySelector(".plataformaMateriasTxt")?.value || "";
+
+  document.getElementById("modalIndisciplinaChk").checked =
+    linha.querySelector(".indisciplinaChk")?.checked || false;
+
+  document.getElementById("modalIndisciplinaTxt").value =
+    linha.querySelector(".indisciplinaTxt")?.value || "";
+
+  document.getElementById("modalProficiencia").value =
+    linha.querySelector(".proficiencia")?.value || "";
+
+  document.getElementById("modalConcluido").checked =
+    linha.querySelector(".concluidoSwitch")?.checked || false;
+
+  bootstrap.Modal.getOrCreateInstance(
+    document.getElementById("modalConselhoAluno")
+  ).show();
+}
+
+//Salva os dados de novo na tabela
+document.getElementById("btnSalvarAluno")?.addEventListener("click", () => {
+  const linhas = document.querySelectorAll("#corpoTabela tr");
+  const linha = linhas[alunoAtualIndex];
+  if (!linha) return;
+
+  linha.querySelector(".dificuldadeChk").checked =
+    document.getElementById("modalDificuldadeChk").checked;
+
+  linha.querySelector(".dificuldadeTxt").value =
+    document.getElementById("modalDificuldadeTxt").value;
+
+  linha.querySelector(".selFazSala").value =
+    document.getElementById("modalFazSala").value;
+
+  linha.querySelector(".salaMateriasTxt").value =
+    document.getElementById("modalSalaTxt").value;
+
+  linha.querySelector(".selFazPlataforma").value =
+    document.getElementById("modalFazPlataforma").value;
+
+  linha.querySelector(".plataformaMateriasTxt").value =
+    document.getElementById("modalPlataformaTxt").value;
+
+  linha.querySelector(".indisciplinaChk").checked =
+    document.getElementById("modalIndisciplinaChk").checked;
+
+  linha.querySelector(".indisciplinaTxt").value =
+    document.getElementById("modalIndisciplinaTxt").value;
+
+  linha.querySelector(".proficiencia").value =
+    document.getElementById("modalProficiencia").value;
+
+  linha.querySelector(".concluidoSwitch").checked =
+    document.getElementById("modalConcluido").checked;
+
+  atualizarStatusLinha(linha);
+  atualizarContadoresTabela();
+
+  bootstrap.Modal.getInstance(document.getElementById("modalConselhoAluno")).hide();
+});
