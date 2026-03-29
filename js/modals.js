@@ -583,7 +583,7 @@ async function removerVinculoDisciplina(id) {
 }
 
 //Função para abrir o modal de destaque do conselho dos alunos
-let alunoAtualIndex = -1;
+
 
 function listaDisciplinasModalHtml(containerId, selecionadas = []) {
   if (!Array.isArray(window.cacheDisciplinas)) return "";
