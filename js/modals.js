@@ -713,6 +713,7 @@ function salvarAlunoModalAtual() {
   const indisciplina = document.querySelector('input[name="modalIndisciplina"]:checked')?.value === "true";
 
   const textoIndisciplina = document.getElementById("modalIndisciplinaTxt").value.trim();
+  const proficiencia = document.getElementById("modalProficiencia").value || "";
 
   if (dificuldade && selecoesModal.dificuldade.length === 0) {
     alert("Se marcar 'Tem dificuldade = Sim', selecione pelo menos uma disciplina.");
@@ -734,6 +735,11 @@ function salvarAlunoModalAtual() {
     return false;
   }
 
+  if (!proficiencia) {
+    alert("Selecione o nível de proficiência do aluno.");
+    return false;
+  }
+
   linha.querySelector(".dificuldadeChk").checked = dificuldade;
   linha.querySelector(".dificuldadeTxt").value = dificuldade ? selecoesModal.dificuldade.join(", ") : "";
 
@@ -746,11 +752,11 @@ function salvarAlunoModalAtual() {
   linha.querySelector(".indisciplinaChk").checked = indisciplina;
   linha.querySelector(".indisciplinaTxt").value = indisciplina ? textoIndisciplina : "";
 
-  linha.querySelector(".proficiencia").value =
-    document.getElementById("modalProficiencia").value;
+  linha.querySelector(".proficiencia").value = proficiencia;
 
-  linha.querySelector(".concluidoSwitch").checked =
-    document.getElementById("modalConcluido").checked;
+  // marca concluído automaticamente ao salvar com sucesso
+  linha.querySelector(".concluidoSwitch").checked = true;
+  document.getElementById("modalConcluido").checked = true;
 
   atualizarStatusLinha(linha);
   atualizarContadoresTabela();
