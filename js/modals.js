@@ -683,17 +683,23 @@ document.addEventListener("modalsLoaded", () => {
   configurarEventosModalConselho();
 
   document.getElementById("btnSalvarAluno")?.addEventListener("click", () => {
-    salvarAlunoModalAtual();
+    const salvou = salvarAlunoModalAtual();
+    if (!salvou) return;
+
     bootstrap.Modal.getInstance(document.getElementById("modalConselhoAluno"))?.hide();
   });
 
   document.getElementById("btnAnterior")?.addEventListener("click", () => {
-    salvarAlunoModalAtual();
+    const salvou = salvarAlunoModalAtual();
+    if (!salvou) return;
+
     if (alunoAtualIndex > 0) abrirModalConselho(alunoAtualIndex - 1);
   });
 
   document.getElementById("btnProximo")?.addEventListener("click", () => {
-    salvarAlunoModalAtual();
+    const salvou = salvarAlunoModalAtual();
+    if (!salvou) return;
+
     const linhas = document.querySelectorAll("#corpoTabela tr");
     if (alunoAtualIndex < linhas.length - 1) abrirModalConselho(alunoAtualIndex + 1);
   });
