@@ -682,7 +682,7 @@ window.abrirModalConselho = function(index) {
   document.getElementById("modalProficiencia").value =
     linha.querySelector(".proficiencia")?.value || "";
 
-    linha.querySelector(".concluidoSwitch")?.checked = true;
+    linha.querySelector(".concluidoSwitch").checked = true;
 
   alternarAreaPorRadio("modalDificuldade", "modalDificuldadeArea", "true");
   alternarAreaPorRadio("modalFazSala", "modalSalaArea", "false");
