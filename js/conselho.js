@@ -449,7 +449,7 @@ async function montarTabelaAlunos(turmaId, bimestre) {
     return;
   }
 
-  (alunos || []).forEach(aluno => {
+  (alunos || []).forEach((aluno, index) => {
     const dadosAluno = (dadosConselho || []).find(d => d.aluno_id === aluno.id) || {};
 
     const difAreaId = `dif_${aluno.id}`;
