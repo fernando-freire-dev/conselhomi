@@ -557,13 +557,17 @@ async function montarTabelaAlunos(turmaId, bimestre) {
           ${hiddenFields}
         </td>
 
-        <td style="min-width: 260px;">
-          ${resumoHtml}
-        </td>
-
-        <td style="min-width: 170px;">
-          ${proficienciaHtml}
-        </td>
+        <td class="cell-resumo" style="min-width: 260px;">
+		  ${resumoHtml}
+		</td>
+		
+		<td class="cell-proficiencia" style="min-width: 170px;">
+		  ${proficienciaHtml}
+		</td>
+		
+		<td class="cell-status text-center" style="min-width: 120px;">
+		  ${statusHtml}
+		</td>
 
         <td class="text-center" style="min-width: 150px;">
           <div class="d-flex justify-content-center gap-2 flex-wrap">
@@ -575,10 +579,7 @@ async function montarTabelaAlunos(turmaId, bimestre) {
             </button>
           </div>
         </td>
-
-        <td class="text-center" style="min-width: 120px;">
-          ${statusHtml}
-        </td>
+		
       </tr>
     `;
 
