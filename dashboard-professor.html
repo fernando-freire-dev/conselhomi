@@ -99,14 +99,25 @@
 	
 	</div>
 
-  <!-- ÁREA DE DISCIPLINAS (fica oculta até clicar em lançar notas) -->
-  <div id="areaDisciplinas" style="display:none;" class="mt-4">
+  <!-- ÁREA DE DISCIPLINAS -->
+    <div id="areaDisciplinas" style="display:none;" class="mt-4">
+      <div class="card p-4">
 
-    <div class="card p-4">
-      <div id="listaDisciplinas" class="mt-3"></div>
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+          <h5 class="mb-0">Minhas disciplinas</h5>
+
+          <div class="d-flex align-items-center gap-2">
+            <label for="ordenacaoSelect" class="mb-0"><strong>Ordenar por:</strong></label>
+            <select id="ordenacaoSelect" class="form-select form-select-sm" style="width: 180px;">
+              <option value="turma">Turma</option>
+              <option value="disciplina">Disciplina</option>
+            </select>
+          </div>
+        </div>
+
+		<div id="listaDisciplinas" class="mt-3"></div>
+      </div>
     </div>
-
-  </div>
 
 
 </div>
