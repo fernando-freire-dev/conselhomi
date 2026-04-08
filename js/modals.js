@@ -4,6 +4,23 @@
 // e APÓS js/supabase.js.
 // ============================================================
 
+/*(async function carregarModais() {
+  try {
+    const resp = await fetch("modals.html");
+    if (!resp.ok) throw new Error("modals.html não encontrado");
+    const html = await resp.text();
+
+    const container = document.createElement("div");
+    container.id = "globalModals";
+    container.innerHTML = html;
+    document.body.appendChild(container);
+  } catch (err) {
+    console.warn("modals.js: não foi possível carregar modals.html →", err.message);
+  }
+})();
+-------------	Antigo Carregar Modals	-----------------
+*/
+
 let alunoAtualIndex = -1;
 let contextoSelecaoAtual = null;
 
@@ -220,54 +237,454 @@ async function carregarTurmasAlunos() {
     .select("id, nome, ano")
     .order("nome", { ascending: true });
 
-  if (error) {
-    console.error(error);
+  if (error) { console.log(error); return; }
+
+  turmasParaAlunos = data || [];
+
+  // Select da aba
+  const filtro = document.getElementById("filtroTurmaAlunos");
+  if (filtro) {
+    filtro.innerHTML = `<option value="">Selecione uma turma</option>`;
+    turmasParaAlunos.forEach(t => {
+      filtro.innerHTML += `<option value="${t.id}">${t.nome} - ${t.ano}</option>`;
+    });
+  }
+}
+
+// Popula o select de turma dentro do modal
+function popularTurmasNoModal() {
+  const select = document.getElementById("novoAlunoTurma");
+  if (!select || turmasParaAlunos.length === 0) return;
+  select.innerHTML = `<option value="">Selecione a turma...</option>`;
+  turmasParaAlunos.forEach(t => {
+    select.innerHTML += `<option value="${t.id}">${t.nome} - ${t.ano}</option>`;
+  });
+
+  // Se já há uma turma selecionada na aba, pré-seleciona no modal
+  const filtro = document.getElementById("filtroTurmaAlunos");
+  if (filtro?.value) select.value = filtro.value;
+}
+
+// Carrega alunos da turma selecionada
+async function loadAlunos() {
+  const turmaId = document.getElementById("filtroTurmaAlunos")?.value;
+  const lista = document.getElementById("listaAlunos");
+
+  if (!turmaId) {
+    if (lista) lista.innerHTML = `<p class="text-muted">Selecione uma turma para ver os alunos.</p>`;
+    todosAlunos = [];
     return;
   }
 
-  turmasParaAlunos = data || [];
+  const { data, error } = await supabaseClient
+    .from("alunos")
+    .select("id, nome, numero_chamada")
+    .eq("turma_id", turmaId)
+    .order("numero_chamada", { ascending: true, nullsFirst: false })
+    .order("nome", { ascending: true });
+
+  if (error) { console.log(error); return; }
+
+  todosAlunos = data || [];
+  renderAlunos();
 }
 
-// ── Modal: Conselho Individual com botão de Notas integrado ──
+// Renderiza lista com busca
+function renderAlunos() {
+  const lista = document.getElementById("listaAlunos");
+  if (!lista) return;
+
+  const termo = (document.getElementById("buscaAluno")?.value || "").toLowerCase().trim();
+
+  let filtrados = todosAlunos;
+  if (termo) {
+    filtrados = filtrados.filter(a =>
+      a.nome?.toLowerCase().includes(termo) ||
+      String(a.id).includes(termo)
+    );
+  }
+
+  if (filtrados.length === 0) {
+    lista.innerHTML = `<p class="text-muted">Nenhum aluno encontrado.</p>`;
+    return;
+  }
+
+  lista.innerHTML = `
+    <table class="table table-bordered align-middle">
+      <thead class="table-light">
+        <tr>
+          <th style="width:60px">Nº</th>
+          <th>Nome</th>
+          <th style="width:130px">RA</th>
+          <th style="width:80px" class="text-center">Ação</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${filtrados.map(a => `
+          <tr>
+            <td>${a.numero_chamada ?? "-"}</td>
+            <td>${a.nome}</td>
+            <td>${a.id}</td>
+            <td class="text-center">
+              <button class="btn btn-sm btn-outline-danger"
+                onclick="confirmarRemoverAluno('${a.id}', '${a.nome.replace(/'/g, "\\'")}')">
+                Remover
+              </button>
+            </td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
+}
+
+// Abre o modal de novo aluno
+function abrirModalNovoAluno() {
+  popularTurmasNoModal();
+
+  document.getElementById("novoAlunoNumeroChamada").value = "";
+  document.getElementById("novoAlunoNome").value = "";
+  document.getElementById("novoAlunoRA").value = "";
+  document.getElementById("feedbackNovoAluno").innerHTML = "";
+
+  if (!modalNovoAlunoInstance) {
+    modalNovoAlunoInstance = new bootstrap.Modal(document.getElementById("modalNovoAluno"));
+  }
+  modalNovoAlunoInstance.show();
+}
+
+// Salva novo aluno
+async function salvarNovoAluno() {
+  const turmaId       = document.getElementById("novoAlunoTurma").value;
+  const numeroChamada = document.getElementById("novoAlunoNumeroChamada").value.trim();
+  const nome          = document.getElementById("novoAlunoNome").value.trim();
+  const ra            = document.getElementById("novoAlunoRA").value.trim();
+
+  const feedback = document.getElementById("feedbackNovoAluno");
+  const btn      = document.getElementById("btnSalvarNovoAluno");
+  const btnTexto = document.getElementById("btnSalvarNovoAlunoTexto");
+  const spinner  = document.getElementById("btnSalvarNovoAlunoSpinner");
+
+  feedback.innerHTML = "";
+
+  if (!turmaId || !nome || !ra) {
+    feedback.innerHTML = `<div class="alert alert-warning py-2">Preencha turma, nome e RA.</div>`;
+    return;
+  }
+
+  btn.disabled = true;
+  btnTexto.textContent = "Salvando...";
+  spinner.classList.remove("d-none");
+
+  try {
+    // 1. Verifica se RA já existe em qualquer turma
+    const { data: raExistente } = await supabaseClient
+      .from("alunos")
+      .select("id, nome")
+      .eq("id", ra)
+      .maybeSingle();
+
+    if (raExistente) {
+      feedback.innerHTML = `<div class="alert alert-danger py-2">Já existe um aluno com o RA <strong>${ra}</strong> (${raExistente.nome}).</div>`;
+      return;
+    }
+
+    // 2. Verifica se número de chamada já existe na mesma turma
+    if (numeroChamada) {
+      const { data: chamadaExistente } = await supabaseClient
+        .from("alunos")
+        .select("id, nome")
+        .eq("turma_id", turmaId)
+        .eq("numero_chamada", parseInt(numeroChamada))
+        .maybeSingle();
+
+      if (chamadaExistente) {
+        feedback.innerHTML = `<div class="alert alert-danger py-2">O número de chamada <strong>${numeroChamada}</strong> já pertence ao aluno <strong>${chamadaExistente.nome}</strong> nessa turma.</div>`;
+        return;
+      }
+    }
+
+    // 3. Salva com nome em maiúsculas
+    const { error } = await supabaseClient
+      .from("alunos")
+      .insert([{
+        id: ra,
+        nome: nome.toUpperCase(),
+        turma_id: turmaId,
+        numero_chamada: numeroChamada ? parseInt(numeroChamada) : null,
+        foto_url: null,
+      }]);
+
+    if (error) {
+      feedback.innerHTML = `<div class="alert alert-danger py-2">Erro ao salvar: ${error.message}</div>`;
+      return;
+    }
+
+    feedback.innerHTML = `<div class="alert alert-success py-2">Aluno <strong>${nome}</strong> adicionado com sucesso!</div>`;
+
+    // Atualiza a lista se a turma do modal for a mesma do filtro
+    const filtroTurma = document.getElementById("filtroTurmaAlunos");
+    if (filtroTurma && (!filtroTurma.value || filtroTurma.value === turmaId)) {
+      filtroTurma.value = turmaId;
+      await loadAlunos();
+    }
+
+    setTimeout(() => modalNovoAlunoInstance?.hide(), 1500);
+
+  } catch (err) {
+    feedback.innerHTML = `<div class="alert alert-danger py-2">Erro inesperado: ${err.message}</div>`;
+  } finally {
+    btn.disabled = false;
+    btnTexto.textContent = "Salvar";
+    spinner.classList.add("d-none");
+  }
+}
+
+// Confirma e remove aluno
+async function confirmarRemoverAluno(alunoId, nome) {
+  const confirmar = confirm(
+    `Deseja remover o aluno "${nome}" (RA: ${alunoId})?\n\nEssa ação é permanente.`
+  );
+  if (!confirmar) return;
+
+  const { error } = await supabaseClient
+    .from("alunos")
+    .delete()
+    .eq("id", alunoId);
+
+  if (error) {
+    alert("Erro ao remover aluno: " + error.message);
+    return;
+  }
+
+  alert(`Aluno "${nome}" removido com sucesso!`);
+  await loadAlunos();
+}
+
+// Chamado ao entrar na aba Alunos
+async function onAbaAlunos() {
+  if (turmasParaAlunos.length === 0) {
+    await carregarTurmasAlunos();
+  }
+}
+
+
+// Modal para mostrar disciplinas associadas a uma turma
+let modalDisciplinasInstance = null;
+let turmaIdAtiva = null;
+
+async function abrirModalDisciplinas(turmaId, turmaNome) {
+  turmaIdAtiva = turmaId;
+  document.getElementById("nomeTurmaModal").innerText = turmaNome;
+  
+  const modalEl = document.getElementById("modalDisciplinasTurma");
+  if (!modalDisciplinasInstance) {
+    modalDisciplinasInstance = new bootstrap.Modal(modalEl);
+  }
+
+  // Limpa e carrega os dados
+  await carregarSelectDisciplinas();
+  await listarDisciplinasDaTurma();
+  
+  modalDisciplinasInstance.show();
+}
+
+async function carregarSelectDisciplinas() {
+  const select = document.getElementById("selectNovaDisciplina");
+  const { data, error } = await supabaseClient
+    .from("disciplinas")
+    .select("id, nome")
+    .order("nome");
+
+  if (error) return;
+
+  select.innerHTML = '<option value="">Selecione...</option>';
+  data.forEach(d => {
+    select.innerHTML += `<option value="${d.id}">${d.nome}</option>`;
+  });
+}
+
+async function listarDisciplinasDaTurma() {
+  const corpo = document.getElementById("listaDisciplinasCorpo");
+  const badge = document.getElementById("totalDisciplinasBadge");
+  if(!corpo) return;
+
+  corpo.innerHTML = '<tr><td colspan="2" class="text-center text-muted py-3">Carregando...</td></tr>';
+
+  // CONSULTA ATUALIZADA: Usando turma_disciplina
+  const { data, error } = await supabaseClient
+    .from("turma_disciplinas") // <--- Mudamos aqui
+    .select(`
+      id, 
+      disciplina_id, 
+      disciplinas ( nome )
+    `)
+    .eq("turma_id", turmaIdAtiva);
+
+  if (error) {
+    console.error("Erro Supabase:", error);
+    corpo.innerHTML = '<tr><td colspan="2" class="text-center text-danger">Erro ao carregar dados.</td></tr>';
+    return;
+  }
+
+  badge.innerText = data.length;
+  corpo.innerHTML = "";
+
+  if (data.length === 0) {
+    corpo.innerHTML = '<tr><td colspan="2" class="text-center text-muted py-3">Nenhuma disciplina na grade desta turma.</td></tr>';
+    return;
+  }
+
+  data.forEach(item => {
+    corpo.innerHTML += `
+      <tr>
+        <td class="align-middle fw-medium">${item.disciplinas?.nome || 'Sem nome'}</td>
+        <td class="text-end">
+          <button class="btn btn-sm text-danger" onclick="removerVinculoDisciplina('${item.id}')">
+            <i class="bi bi-trash"></i> Remover
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+async function vincularNovaDisciplina() {
+  const discId = document.getElementById("selectNovaDisciplina").value;
+  if (!discId) return alert("Selecione uma disciplina.");
+
+  const { error } = await supabaseClient
+    .from("turma_disciplinas") // <--- ajuste aqui também
+    .insert([{ 
+      turma_id: turmaIdAtiva, 
+      disciplina_id: discId 
+    }]);
+
+  if (error) {
+    alert("Erro ao salvar: " + error.message);
+  } else {
+    listarDisciplinasDaTurma();
+  }
+}
+
+async function removerVinculoDisciplina(id) {
+  if (!confirm("Deseja remover o vínculo desta disciplina com a turma?")) return;
+
+  const { error } = await supabaseClient
+    .from("professor_disciplina_turma")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    alert("Erro ao remover: " + error.message);
+  } else {
+    listarDisciplinasDaTurma();
+  }
+}
+
+//Função para abrir o modal de destaque do conselho dos alunos
+
+
+function listaDisciplinasModalHtml(containerId, selecionadas = []) {
+  if (!Array.isArray(window.cacheDisciplinas)) return "";
+
+  return (window.cacheDisciplinas || []).map((disc, i) => {
+    const checked = selecionadas.includes(disc.nome) ? "checked" : "";
+    return `
+      <div class="col-md-4 col-sm-6">
+        <div class="form-check">
+          <input class="form-check-input ${containerId}-chk" type="checkbox"
+            id="${containerId}_${i}" value="${disc.nome}" ${checked}>
+          <label class="form-check-label" for="${containerId}_${i}">
+            ${disc.nome}
+          </label>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function obterSelecionadasPorClasse(classe) {
+  return Array.from(document.querySelectorAll(`.${classe}:checked`)).map(el => el.value);
+}
+
+function textoParaLista(texto) {
+  if (!texto) return [];
+  return texto.split(",").map(t => t.trim()).filter(Boolean);
+}
+
+function alternarAreaPorRadio(nomeRadio, areaId, valorQueMostra = "true") {
+  const selecionado = document.querySelector(`input[name="${nomeRadio}"]:checked`);
+  const area = document.getElementById(areaId);
+  if (!area) return;
+
+  area.classList.toggle("d-none", !selecionado || selecionado.value !== valorQueMostra);
+}
+
+function configurarEventosModalConselho() {
+  document.querySelectorAll('input[name="modalDificuldade"]').forEach(el => {
+    el.addEventListener("change", () => alternarAreaPorRadio("modalDificuldade", "modalDificuldadeArea", "true"));
+  });
+
+  document.querySelectorAll('input[name="modalFazSala"]').forEach(el => {
+    el.addEventListener("change", () => alternarAreaPorRadio("modalFazSala", "modalSalaArea", "false"));
+  });
+
+  document.querySelectorAll('input[name="modalFazPlataforma"]').forEach(el => {
+    el.addEventListener("change", () => alternarAreaPorRadio("modalFazPlataforma", "modalPlataformaArea", "false"));
+  });
+
+  document.querySelectorAll('input[name="modalIndisciplina"]').forEach(el => {
+    el.addEventListener("change", () => alternarAreaPorRadio("modalIndisciplina", "modalIndisciplinaArea", "true"));
+  });
+}
 
 window.abrirModalConselho = async function(index) {
   const linhas = document.querySelectorAll("#corpoTabela tr");
-  if (index < 0 || index >= linhas.length) return;
-
   alunoAtualIndex = index;
+
   const linha = linhas[index];
+  if (!linha) return;
 
-  // Dados ocultos
   const alunoId = linha.getAttribute("data-aluno-id");
-  const alunoNome = linha.getAttribute("data-aluno-nome");
-  const dificuldade = linha.querySelector(".dificuldadeChk")?.checked || false;
-  const dificMat = linha.querySelector(".dificuldadeTxt")?.value || "";
+  const nome = linha.querySelector(".col-aluno")?.innerText || "";
+  document.getElementById("modalAlunoTitulo").innerText = nome;
 
-  const fazSalaVal = linha.querySelector(".selFazSala")?.value || "true";
-  const salaMat = linha.querySelector(".salaMateriasTxt")?.value || "";
+  const dificuldadeMarcada = linha.querySelector(".dificuldadeChk")?.checked || false;
+  const dificuldadeTexto = linha.querySelector(".dificuldadeTxt")?.value || "";
 
-  const fazPlatVal = linha.querySelector(".selFazPlataforma")?.value || "true";
-  const platMat = linha.querySelector(".plataformaMateriasTxt")?.value || "";
+  const fazSala = linha.querySelector(".selFazSala")?.value || "true";
+  const salaTexto = linha.querySelector(".salaMateriasTxt")?.value || "";
 
-  const indisciplina = linha.querySelector(".indisciplinaChk")?.checked || false;
-  const indTxt = linha.querySelector(".indisciplinaTxt")?.value || "";
+  const fazPlataforma = linha.querySelector(".selFazPlataforma")?.value || "true";
+  const plataformaTexto = linha.querySelector(".plataformaMateriasTxt")?.value || "";
 
-  const proficienciaVal = linha.querySelector(".proficiencia")?.value || "";
+  const indisciplinaMarcada = linha.querySelector(".indisciplinaChk")?.checked || false;
+  const indisciplinaTexto = linha.querySelector(".indisciplinaTxt")?.value || "";
 
-  // Popular campos do modal
-  document.getElementById("modalAlunoNome").innerText = alunoNome;
+  selecoesModal.dificuldade = textoParaLista(dificuldadeTexto);
+  selecoesModal.sala = textoParaLista(salaTexto);
+  selecoesModal.plataforma = textoParaLista(plataformaTexto);
 
-  selecoesModal.dificuldade = textoParaLista(dificMat);
-  selecoesModal.sala = textoParaLista(salaMat);
-  selecoesModal.plataforma = textoParaLista(platMat);
+  document.getElementById("modalDificuldadeSim").checked = dificuldadeMarcada;
+  document.getElementById("modalDificuldadeNao").checked = !dificuldadeMarcada;
 
-  document.querySelector(`input[name="modalDificuldade"][value="${dificuldade}"]`).checked = true;
-  document.querySelector(`input[name="modalFazSala"][value="${fazSalaVal}"]`).checked = true;
-  document.querySelector(`input[name="modalFazPlataforma"][value="${fazPlatVal}"]`).checked = true;
-  document.querySelector(`input[name="modalIndisciplina"][value="${indisciplina}"]`).checked = true;
+  document.getElementById("modalFazSalaSim").checked = fazSala === "true";
+  document.getElementById("modalFazSalaNao").checked = fazSala === "false";
 
-  document.getElementById("modalIndisciplinaTxt").value = indTxt;
-  document.getElementById("modalProficiencia").value = proficienciaVal;
+  document.getElementById("modalFazPlataformaSim").checked = fazPlataforma === "true";
+  document.getElementById("modalFazPlataformaNao").checked = fazPlataforma === "false";
+
+  document.getElementById("modalIndisciplinaSim").checked = indisciplinaMarcada;
+  document.getElementById("modalIndisciplinaNao").checked = !indisciplinaMarcada;
+
+  document.getElementById("modalIndisciplinaTxt").value = indisciplinaTexto;
+
+  document.getElementById("modalProficiencia").value =
+    linha.querySelector(".proficiencia")?.value || "";
+
+  // Não marcar como concluído ao abrir o modal
+  // linha.querySelector(".concluidoSwitch").checked = true;
 
   alternarAreaPorRadio("modalDificuldade", "modalDificuldadeArea", "true");
   alternarAreaPorRadio("modalFazSala", "modalSalaArea", "false");
@@ -278,60 +695,21 @@ window.abrirModalConselho = async function(index) {
   atualizarResumoSelecao("sala");
   atualizarResumoSelecao("plataforma");
 
-  // Botões de navegação
-  const btnAnterior = document.getElementById("btnAnterior");
-  const btnProximo = document.getElementById("btnProximo");
-  btnAnterior.disabled = (index === 0);
-  btnProximo.disabled = (index === linhas.length - 1);
+  document.getElementById("btnAnterior").disabled = index === 0;
+  document.getElementById("btnProximo").disabled = index === linhas.length - 1;
 
-  // Atualizar atributo data-aluno no botão de notas do modal
-  const btnNotasModal = document.getElementById("btnNotasModal");
-  if (btnNotasModal) {
-    btnNotasModal.setAttribute("data-aluno", alunoId);
-  }
-
-  // Buscar proficiência do bimestre anterior
-  const textoProfAnterior = document.getElementById("textoProfAnterior");
+  const textoProfAnterior = document.getElementById("textoProficienciaAnterior");
   if (textoProfAnterior) {
-    textoProfAnterior.textContent = "Carregando...";
+    textoProfAnterior.textContent = "Proficiência no conselho anterior: carregando...";
   }
 
   try {
-    if (conselhoAtual?.bimestre > 1) {
-      const bimestreAnterior = conselhoAtual.bimestre - 1;
-      const { data: conselhoAnt } = await supabaseClient
-        .from("conselhos")
-        .select("id")
-        .eq("turma_id", conselhoAtual.turma_id)
-        .eq("bimestre", bimestreAnterior)
-        .maybeSingle();
+    const profAnterior = await buscarProficienciaBimestreAnterior(alunoId, conselhoAtual);
 
-      if (conselhoAnt) {
-        const { data: alunoAnt } = await supabaseClient
-          .from("conselho_alunos")
-          .select("nivel_proficiencia")
-          .eq("conselho_id", conselhoAnt.id)
-          .eq("aluno_id", alunoId)
-          .maybeSingle();
-
-        if (alunoAnt?.nivel_proficiencia) {
-          if (textoProfAnterior) {
-            textoProfAnterior.textContent = `Proficiência no conselho anterior: ${alunoAnt.nivel_proficiencia}`;
-          }
-        } else {
-          if (textoProfAnterior) {
-            textoProfAnterior.textContent = "Proficiência no conselho anterior: sem registro";
-          }
-        }
-      } else {
-        if (textoProfAnterior) {
-          textoProfAnterior.textContent = "Proficiência no conselho anterior: conselho não encontrado";
-        }
-      }
-    } else {
-      if (textoProfAnterior) {
-        textoProfAnterior.textContent = "Proficiência no conselho anterior: não aplicável (1º bimestre)";
-      }
+    if (textoProfAnterior) {
+      textoProfAnterior.textContent = profAnterior
+        ? `Proficiência no conselho anterior: ${profAnterior}`
+        : "Proficiência no conselho anterior: não registrada";
     }
   } catch (err) {
     console.error("Erro ao carregar proficiência anterior:", err);
@@ -569,12 +947,4 @@ document.getElementById("btnProximo")?.addEventListener("click", async () => {
   const linhas = document.querySelectorAll("#corpoTabela tr");
   if (alunoAtualIndex < linhas.length - 1) abrirModalConselho(alunoAtualIndex + 1);
 });
-
-  // ── NOVO: Botão de Notas dentro do modal do conselho ──
-  document.getElementById("btnNotasModal")?.addEventListener("click", (e) => {
-    const alunoId = e.target.closest("#btnNotasModal").getAttribute("data-aluno");
-    if (alunoId && typeof abrirModalNotas === 'function') {
-      abrirModalNotas(alunoId);
-    }
-  });
 });
