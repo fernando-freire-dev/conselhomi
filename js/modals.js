@@ -80,18 +80,47 @@ function montarListaDisciplinasSelecao(tipo) {
     return;
   }
 
-  listaEl.innerHTML = disciplinas.map((disc, i) => {
-    const checked = selecionadas.includes(disc.nome) ? "checked" : "";
-    return `
-      <div class="form-check mb-2">
-        <input class="form-check-input chk-disciplina-selecao" type="checkbox"
-          id="disc_${tipo}_${i}" value="${disc.nome}" ${checked}>
-        <label class="form-check-label" for="disc_${tipo}_${i}">
-          ${disc.nome}
-        </label>
-      </div>
-    `;
-  }).join("");
+  const todasMarcadas = disciplinas.every(d => selecionadas.includes(d.nome));
+
+  listaEl.innerHTML = `
+    <!-- Selecionar todas -->
+    <div class="form-check mb-3 pb-2 border-bottom">
+      <input class="form-check-input" type="checkbox" id="chkSelecionarTodas"
+        ${todasMarcadas ? "checked" : ""}>
+      <label class="form-check-label fw-semibold" for="chkSelecionarTodas">
+        Selecionar todas
+      </label>
+    </div>
+
+    ${disciplinas.map((disc, i) => {
+      const checked = selecionadas.includes(disc.nome) ? "checked" : "";
+      return `
+        <div class="form-check mb-2">
+          <input class="form-check-input chk-disciplina-selecao" type="checkbox"
+            id="disc_${tipo}_${i}" value="${disc.nome}" ${checked}>
+          <label class="form-check-label" for="disc_${tipo}_${i}">
+            ${disc.nome}
+          </label>
+        </div>
+      `;
+    }).join("")}
+  `;
+
+  // Evento do "Selecionar todas"
+  document.getElementById("chkSelecionarTodas")?.addEventListener("change", function() {
+    const checkboxes = listaEl.querySelectorAll(".chk-disciplina-selecao");
+    checkboxes.forEach(chk => chk.checked = this.checked);
+  });
+
+  // Atualiza o "Selecionar todas" conforme checkboxes individuais mudam
+  listaEl.addEventListener("change", function(e) {
+    if (e.target.classList.contains("chk-disciplina-selecao")) {
+      const todos = listaEl.querySelectorAll(".chk-disciplina-selecao");
+      const todosMarcados = Array.from(todos).every(chk => chk.checked);
+      const chkTodas = document.getElementById("chkSelecionarTodas");
+      if (chkTodas) chkTodas.checked = todosMarcados;
+    }
+  });
 }
 
 function abrirModalSelecaoDisciplinas(tipo, titulo) {
