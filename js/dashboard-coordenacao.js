@@ -188,7 +188,7 @@ function formatarDataBR(data) {
 // Relatório do Conselho (PDF)
 // =============================
 async function baixarRelatorio(conselhoId) {
-  if (!window.jspdf || !window.jspdf?.jsPDF || !window.jspdf?.jsPDF) {
+  if (!window.jspdf?.jsPDF) {
     alert("jsPDF não carregou. Verifique os scripts do jsPDF e autoTable no HTML.");
     return;
   }
@@ -201,6 +201,7 @@ async function baixarRelatorio(conselhoId) {
   const marginR = 8;
   const contentW = pageW - marginL - marginR;
 
+  // ── Buscar dados ──────────────────────────────────────────
   const { data: conselho, error: errConselho } = await supabaseClient
     .from("conselhos")
     .select("id, bimestre, turma_id, observacoes_gerais, data_conselho, turmas(nome, ano)")
@@ -208,7 +209,6 @@ async function baixarRelatorio(conselhoId) {
     .single();
 
   if (errConselho || !conselho) {
-    console.error("Erro conselho:", errConselho);
     alert("Erro ao buscar dados do conselho.");
     return;
   }
@@ -216,77 +216,94 @@ async function baixarRelatorio(conselhoId) {
   const { data: registros, error: errRegistros } = await supabaseClient
     .from("conselho_alunos")
     .select(`
-      conselho_id,
       aluno_id,
       dificuldade,
       faz_atividade_sala,
       faz_plataforma,
       indisciplina,
       nivel_proficiencia,
-      concluido,
       alunos ( nome, numero_chamada )
     `)
     .eq("conselho_id", conselhoId)
     .order("numero_chamada", { foreignTable: "alunos", ascending: true });
 
   if (errRegistros) {
-    console.error("Erro conselho_alunos:", errRegistros);
-    alert("Erro ao buscar registros do conselho (conselho_alunos).");
+    alert("Erro ao buscar registros do conselho.");
     return;
   }
 
-  const simNaoFaz = (obj) => {
-    if (!obj || typeof obj !== "object") return "Sim";
-    const faz = obj.faz !== undefined ? !!obj.faz : true;
-    const materias = (obj.materias || "").trim();
-    if (faz) return "Sim";
-    return materias ? `Não (${materias})` : "Não";
-  };
+  // ── Helpers para montar o resumo ──────────────────────────
+  function montarResumo(r) {
+    const badges = [];
 
-  const difTxt = (obj) => {
-    if (!obj || typeof obj !== "object") return "Não";
-    const tem = !!obj.tem;
-    const materias = (obj.materias || "").trim();
-    if (!tem) return "Não";
-    return materias ? `Sim (${materias})` : "Sim";
-  };
+    // Dificuldade
+    const dif = r.dificuldade;
+    if (dif && typeof dif === "object" && dif.tem) {
+      const qtd = dif.materias
+        ? dif.materias.split(",").map(t => t.trim()).filter(Boolean).length
+        : 0;
+      badges.push(`Dificuldade${qtd > 0 ? ` (${qtd})` : ""}`);
+    }
 
-  const indTxt = (obj) => {
-    if (!obj) return "Não";
-    if (typeof obj === "boolean") return obj ? "Sim" : "Não";
-    if (typeof obj !== "object") return "Não";
+    // Sem atividade em sala
+    const sala = r.faz_atividade_sala;
+    const fazSala = sala && typeof sala === "object"
+      ? (sala.faz !== undefined ? !!sala.faz : true)
+      : true;
+    if (!fazSala) {
+      const qtd = sala?.materias
+        ? sala.materias.split(",").map(t => t.trim()).filter(Boolean).length
+        : 0;
+      badges.push(`Sem atividade${qtd > 0 ? ` (${qtd})` : ""}`);
+    }
 
-    const tem = !!obj.tem;
-    const desc = (obj.descricao || obj.materias || "").trim();
-    if (!tem) return "Não";
-    return desc ? `Sim (${desc})` : "Sim";
-  };
+    // Sem plataforma
+    const plat = r.faz_plataforma;
+    const fazPlat = plat && typeof plat === "object"
+      ? (plat.faz !== undefined ? !!plat.faz : true)
+      : true;
+    if (!fazPlat) {
+      const qtd = plat?.materias
+        ? plat.materias.split(",").map(t => t.trim()).filter(Boolean).length
+        : 0;
+      badges.push(`Sem plataforma${qtd > 0 ? ` (${qtd})` : ""}`);
+    }
 
+    // Indisciplina
+    const ind = r.indisciplina;
+    const temInd = ind && typeof ind === "object" ? !!ind.tem : !!ind;
+    if (temInd) badges.push("Indisciplina");
+
+    return badges.length > 0 ? badges.join("   ") : "Sem apontamentos";
+  }
+
+  // ── Cabeçalho do PDF ─────────────────────────────────────
   const turmaTxt = conselho.turmas
     ? `${conselho.turmas.nome} - ${conselho.turmas.ano || ""}`.trim()
     : "Turma";
 
-  const titulo = "PEI Manoel Ignácio da Silva";
-  const subtitulo = `Relatório do Conselho de Classe • ${turmaTxt} • ${conselho.bimestre}º Bimestre`;
   const dataConselhoTxt = conselho.data_conselho ? formatarDataBR(conselho.data_conselho) : "-";
   const dataEmissaoTxt = formatarDataBR(new Date());
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(15);
-  doc.text(titulo, pageW / 2, 10, { align: "center" });
+  doc.text("PEI Manoel Ignácio da Silva", pageW / 2, 10, { align: "center" });
 
   doc.setFontSize(11);
-  doc.text(subtitulo, pageW / 2, 16.5, { align: "center" });
+  doc.text(
+    `Relatório do Conselho de Classe • ${turmaTxt} • ${conselho.bimestre}º Bimestre`,
+    pageW / 2, 16.5, { align: "center" }
+  );
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.text(`Data do conselho: ${dataConselhoTxt}`, marginL, 23);
   doc.text(`Emissão: ${dataEmissaoTxt}`, pageW - marginR, 23, { align: "right" });
 
-  doc.setFontSize(10);
   doc.text("Professor representante: ____________________________________________", marginL, 29);
   doc.text("Reunião com responsáveis (data): ____/____/______", pageW - marginR, 29, { align: "right" });
 
+  // ── Observações gerais ────────────────────────────────────
   const obsLabelY = 35;
   doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
@@ -298,40 +315,28 @@ async function baixarRelatorio(conselhoId) {
   const obs = (conselho.observacoes_gerais || "").trim() || "—";
   const boxPadding = 3;
   const boxStartY = obsLabelY + 2;
-  const textStartY = obsLabelY + 6;
-
-  const obsLines = doc.splitTextToSize(obs, contentW - (boxPadding * 2));
+  const obsLines = doc.splitTextToSize(obs, contentW - boxPadding * 2);
   const lineHeight = 4.5;
-  const boxHeight = (obsLines.length * lineHeight) + (boxPadding * 2);
+  const boxHeight = obsLines.length * lineHeight + boxPadding * 2;
 
   doc.setDrawColor(0);
   doc.setLineWidth(0.3);
   doc.rect(marginL, boxStartY, contentW, boxHeight);
-
-  doc.text(obsLines, marginL + boxPadding, textStartY + boxPadding);
+  doc.text(obsLines, marginL + boxPadding, obsLabelY + 6 + boxPadding);
 
   let startY = boxStartY + boxHeight + 2;
   if (startY < 45) startY = 45;
 
-  const colunas = [
-    "Nome",
-    "Dificuldade",
-    "Faz atividade em sala?",
-    "Faz plataformas?",
-    "Indisciplina",
-    "Proficiência",
-    "Assinatura do responsável"
-  ];
+  // ── Tabela simplificada ───────────────────────────────────
+  const colunas = ["Nº", "Nome", "Resumo", "Proficiência", "Assinatura do responsável"];
 
-  const linhas = (registros || []).map(r => ([
+  const linhas = (registros || []).map(r => [
+    r.alunos?.numero_chamada ?? "",
     r.alunos?.nome || "",
-    difTxt(r.dificuldade),
-    simNaoFaz(r.faz_atividade_sala),
-    simNaoFaz(r.faz_plataforma),
-    indTxt(r.indisciplina),
+    montarResumo(r),
     r.nivel_proficiencia || "-",
     ""
-  ]));
+  ]);
 
   doc.autoTable({
     head: [colunas],
@@ -339,16 +344,33 @@ async function baixarRelatorio(conselhoId) {
     startY,
     theme: "grid",
     margin: { left: marginL, right: marginR },
-    styles: { fontSize: 9, cellPadding: 2, valign: "middle" },
-    headStyles: { fontSize: 9 },
+    styles: {
+      fontSize: 9,
+      cellPadding: 2,
+      valign: "middle",
+      overflow: "linebreak"
+    },
+    headStyles: {
+      fontSize: 9,
+      fillColor: [30, 60, 114],
+      textColor: 255,
+      fontStyle: "bold"
+    },
     columnStyles: {
-      0: { cellWidth: 50 },
-      1: { cellWidth: 40 },
-      2: { cellWidth: 32 },
-      3: { cellWidth: 32 },
-      4: { cellWidth: 47 },
-      5: { cellWidth: 25 },
-      6: { cellWidth: 55 }
+      0: { cellWidth: 10, halign: "center" },  // Nº
+      1: { cellWidth: 60 },                     // Nome
+      2: { cellWidth: 110 },                    // Resumo — maior para caber os badges
+      3: { cellWidth: 30 },                     // Proficiência
+      4: { cellWidth: 67 }                      // Assinatura
+    },
+    // Linha zebrada para facilitar leitura
+    alternateRowStyles: { fillColor: [245, 247, 250] },
+    didParseCell: function(data) {
+      // Destaca "Sem apontamentos" em cinza
+      if (data.column.index === 2 && data.cell.raw === "Sem apontamentos") {
+        data.cell.styles.textColor = [150, 150, 150];
+        data.cell.styles.fontStyle = "italic";
+      }
     }
   });
 
