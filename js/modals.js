@@ -665,7 +665,6 @@ window.abrirModalConselho = async function(index) {
     };
   }
 
-  /* Adicionar as notas no modal
   // ✅ NOVO: carrega notas do bimestre atual na coluna lateral
   const bimestre = conselhoAtual?.bimestre || "-";
   const bimestreEl = document.getElementById("modalNotasLateral_bimestre");
@@ -701,7 +700,7 @@ window.abrirModalConselho = async function(index) {
       }).join("");
     }
   }
-  */
+  
 
   const dificuldadeMarcada = linha.querySelector(".dificuldadeChk")?.checked || false;
   const dificuldadeTexto = linha.querySelector(".dificuldadeTxt")?.value || "";
