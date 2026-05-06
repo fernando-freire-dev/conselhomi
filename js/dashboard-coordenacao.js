@@ -234,6 +234,13 @@ async function baixarRelatorio(conselhoId) {
     return;
   }
 
+  // Ordena por número de chamada
+  const registrosOrdenados = (registros || []).sort((a, b) => {
+    const nA = a.alunos?.numero_chamada ?? 9999;
+    const nB = b.alunos?.numero_chamada ?? 9999;
+    return nA - nB;
+  });
+
   // ── Helpers para montar o resumo ──────────────────────────
   function montarResumo(r) {
     const badges = [];
@@ -332,7 +339,7 @@ async function baixarRelatorio(conselhoId) {
   // ── Tabela simplificada ───────────────────────────────────
   const colunas = ["Nº", "Nome", "Resumo", "Proficiência", "Assinatura do responsável"];
 
-  const linhas = (registros || []).map(r => [
+  const linhas = registrosOrdenados.map(r => [
     r.alunos?.numero_chamada ?? "",
     r.alunos?.nome || "",
     montarResumo(r),
