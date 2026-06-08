@@ -450,11 +450,18 @@ async function salvarTudo() {
       .from("periodos")
       .select("status")
       .eq("bimestre", bimestreAtual)
-      .single();
+      .maybeSingle();
+    
+    console.log("Período encontrado:", periodo);
     
     if (erroPeriodo) {
       alert("Erro ao verificar o status do período.");
       console.error(erroPeriodo);
+      return;
+    }
+    
+    if (!periodo) {
+      alert(`Período ${bimestreAtual} não encontrado.`);
       return;
     }
     
