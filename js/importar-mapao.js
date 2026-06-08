@@ -439,13 +439,11 @@ async function salvarTudo() {
     // =====================================================
     // 08/06/2026 - Verifica se o bimestre está aberto
     // antes de permitir salvar notas e faltas
-    // =====================================================    
-    const bimestreAtual = parseInt(dadosImportados[0].bimestre);
-
-    console.log("Valor original:", dadosImportados[0].bimestre);
-
+    // =====================================================
+    
     const bimestreAtual = parseInt(dadosImportados[0].bimestre);
     
+    console.log("Valor original:", dadosImportados[0].bimestre);
     console.log("Valor convertido:", bimestreAtual);
     
     const { data: periodo, error: erroPeriodo } = await supabaseClient
@@ -464,7 +462,7 @@ async function salvarTudo() {
       alert(`❌ O ${bimestreAtual}º bimestre está fechado para edição.`);
       return;
     }
-    // Fim da alteração
+    //Fim da alteração
 
     const { error } = await supabaseClient
       .from("notas_frequencia")
