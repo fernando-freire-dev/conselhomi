@@ -437,16 +437,16 @@ async function salvarTudo() {
     }
 
     // =====================================================
-    // 08/06/2026 - Debug do bimestre identificado
-    // =====================================================
-    
-    console.log("Bimestre identificado:", bimestreAtual);
-
-    // =====================================================
     // 08/06/2026 - Verifica se o bimestre está aberto
     // antes de permitir salvar notas e faltas
     // =====================================================    
     const bimestreAtual = parseInt(dadosImportados[0].bimestre);
+
+    console.log("Valor original:", dadosImportados[0].bimestre);
+
+    const bimestreAtual = parseInt(dadosImportados[0].bimestre);
+    
+    console.log("Valor convertido:", bimestreAtual);
     
     const { data: periodo, error: erroPeriodo } = await supabaseClient
       .from("periodos")
