@@ -437,6 +437,12 @@ async function salvarTudo() {
     }
 
     // =====================================================
+    // 08/06/2026 - Debug do bimestre identificado
+    // =====================================================
+    
+    console.log("Bimestre identificado:", bimestreAtual);
+
+    // =====================================================
     // 08/06/2026 - Verifica se o bimestre está aberto
     // antes de permitir salvar notas e faltas
     // =====================================================    
