@@ -436,6 +436,30 @@ async function salvarTudo() {
       return;
     }
 
+    // =====================================================
+    // 08/06/2026 - Verifica se o bimestre está aberto
+    // antes de permitir salvar notas e faltas
+    // =====================================================    
+    const bimestreAtual = parseInt(dadosImportados[0].bimestre);
+    
+    const { data: periodo, error: erroPeriodo } = await supabaseClient
+      .from("periodos")
+      .select("status")
+      .eq("bimestre", bimestreAtual)
+      .single();
+    
+    if (erroPeriodo) {
+      alert("Erro ao verificar o status do período.");
+      console.error(erroPeriodo);
+      return;
+    }
+    
+    if (periodo.status !== "aberto") {
+      alert(`❌ O ${bimestreAtual}º bimestre está fechado para edição.`);
+      return;
+    }
+    // Fim da alteração
+
     const { error } = await supabaseClient
       .from("notas_frequencia")
       .upsert(registros, { onConflict: ["aluno_id", "disciplina_id", "bimestre"] });
