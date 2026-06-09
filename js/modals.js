@@ -498,36 +498,7 @@ async function confirmarRemoverAluno(alunoId, nome) {
 //09_06 Função para mudar a situação do aluno para "Transferido"
 async function transferirAluno(ra, nome) {
 
-  console.log("RA ORIGINAL:", ra);
-  console.log("TIPO:", typeof ra);
-
-  const idConvertido = String(ra).trim();
-
-  console.log("RA CONVERTIDO:", idConvertido);
-
-  const { data: antes } = await supabaseClient
-    .from("alunos")
-    .select("*")
-    .eq("id", idConvertido);
-
-  console.log("ANTES DO UPDATE:", antes);
-
-  const { data, error } = await supabaseClient
-    .from("alunos")
-    .update({
-      situacao: "transferido"
-    })
-    .eq("id", idConvertido)
-    .select();
-
-  console.log("RESULTADO UPDATE:", data);
-  console.log("ERRO:", error);
-
-  await loadAlunos();
-}
-/*async function transferirAluno(ra, nome) {
-
-  console.log("RA recebido:", ra);
+  const id = String(ra).trim();
 
   const confirmar = confirm(
     `Deseja transferir o aluno ${nome}?`
@@ -535,26 +506,21 @@ async function transferirAluno(ra, nome) {
 
   if (!confirmar) return;
 
-  const { data, error } = await supabaseClient
+  const { error } = await supabaseClient
     .from("alunos")
-    .update({
-      situacao: "transferido"
-    })
-    .eq("id", String(ra).trim())
-    .select();
-
-  console.log("Resultado:", data);
-  console.log("Erro:", error);
+    .update({ situacao: "transferido" })
+    .eq("id", id);
 
   if (error) {
-    alert("Erro ao transferir.");
+    alert("Erro ao transferir aluno.");
+    console.error(error);
     return;
   }
 
-  alert("Transferência concluída.");
+  alert("Aluno transferido com sucesso.");
 
   await loadAlunos();
-}*/
+}
 
 // Chamado ao entrar na aba Alunos
 async function onAbaAlunos() {
