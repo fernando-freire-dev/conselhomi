@@ -801,7 +801,9 @@ window.alterarStatusPeriodo = async function (
   const { error } = await supabaseClient
     .from("periodos")
     .update({
-      status: novoStatus
+      status: novoStatus,
+      alterado_por: usuarioLogado.nome,
+      data_alteracao: new Date().toISOString()
     })
     .eq("bimestre", bimestre);
 
