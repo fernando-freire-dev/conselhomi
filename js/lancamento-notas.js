@@ -100,27 +100,9 @@ async function salvarNotas() {
   // =====================================================
   // Verifica se o bimestre está aberto
   // =====================================================
-  const { data: periodo, error: erroPeriodo } = await supabaseClient
-    .from("periodos")
-    .select("status")
-    .eq("bimestre", bimestre)
-    .maybeSingle();
-
-  if (erroPeriodo) {
-    alert("Erro ao verificar o status do período.");
-    console.error(erroPeriodo);
-    return;
-  }
-
-  if (!periodo) {
-    alert(`Período ${bimestre} não encontrado.`);
-    return;
-  }
-
-  if (periodo.status !== "aberto") {
-    alert(`❌ O ${bimestre}º bimestre está fechado para edição.`);
-    return;
-  } //Fim da alteração
+  const periodoAberto =
+  await validarPeriodoAberto(bimestre);
+  if (!periodoAberto) return; //Fim da alteração
 
   const inputsMedia = document.querySelectorAll(".media");
   const inputsFaltas = document.querySelectorAll(".faltas");
