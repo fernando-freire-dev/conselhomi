@@ -732,9 +732,9 @@ window.carregarPeriodos = async function () {
     // =====================================================
 
     const badgeStatus =
-  periodo.status === "aberto"
-    ? '<span class="badge bg-success-subtle text-success border border-success-subtle">🟢 Aberto</span>'
-    : '<span class="badge bg-danger-subtle text-danger border border-danger-subtle">🔒 Fechado</span>';
+    periodo.status === "aberto"
+      ? '<span class="badge bg-success-subtle text-success border border-success-subtle">🟢 Aberto</span>'
+      : '<span class="badge bg-danger-subtle text-danger border border-danger-subtle">🔒 Fechado</span>';
 
     // =====================================================
     // 08/06/2026 - Define a ação disponível para o período
@@ -756,9 +756,13 @@ window.carregarPeriodos = async function () {
             Abrir
           </button>
         `;
+    const classeLinha =
+    periodo.status === "aberto"
+      ? "table-success"
+      : "table-danger";
 
     tbody.innerHTML += `
-      <tr>
+      <tr class="${classeLinha}">
         <td>${periodo.bimestre}º</td>
         <td>${periodo.descricao}</td>
         <td>${badgeStatus}</td>
