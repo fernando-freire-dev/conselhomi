@@ -511,7 +511,7 @@ async function transferirAluno(ra, nome) {
     .update({
       situacao: "transferido"
     })
-    .eq("id", ra)
+    .eq("id", String(ra).trim())
     .select();
 
   console.log("Resultado:", data);
