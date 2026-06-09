@@ -447,6 +447,7 @@ async function salvarNovoAluno() {
         turma_id: turmaId,
         numero_chamada: numeroChamada ? parseInt(numeroChamada) : null,
         foto_url: null,
+        situacao: "ativo"
       }]);
 
     if (error) {
