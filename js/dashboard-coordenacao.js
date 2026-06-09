@@ -704,3 +704,40 @@ function renderPreviewNotasFaltasCoordenacao({ turmaInfo, bimestre, alunos, disc
     </div>
   `;
 }
+
+// =====================================================
+// Nova Aba - Carrega os períodos cadastrados - 08/06/2026
+// =====================================================
+
+async function carregarPeriodos() {
+
+  const { data, error } = await supabaseClient
+    .from("periodos")
+    .select("*")
+    .order("bimestre");
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  const tbody = document.getElementById("listaPeriodos");
+
+  tbody.innerHTML = "";
+
+  data.forEach(periodo => {
+
+    tbody.innerHTML += `
+      <tr>
+        <td>${periodo.bimestre}º</td>
+        <td>${periodo.descricao}</td>
+        <td>${periodo.status}</td>
+        <td>
+          Em breve...
+        </td>
+      </tr>
+    `;
+
+  });
+
+}
