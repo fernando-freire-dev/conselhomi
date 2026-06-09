@@ -442,33 +442,11 @@ async function salvarTudo() {
     // =====================================================
     
     const bimestreAtual = parseInt(dadosImportados[0].bimestre);
+
+    const periodoAberto =
+      await validarPeriodoAberto(bimestreAtual);
     
-    console.log("Valor original:", dadosImportados[0].bimestre);
-    console.log("Valor convertido:", bimestreAtual);
-    
-    const { data: periodo, error: erroPeriodo } = await supabaseClient
-      .from("periodos")
-      .select("status")
-      .eq("bimestre", bimestreAtual)
-      .maybeSingle();
-    
-    console.log("Período encontrado:", periodo);
-    
-    if (erroPeriodo) {
-      alert("Erro ao verificar o status do período.");
-      console.error(erroPeriodo);
-      return;
-    }
-    
-    if (!periodo) {
-      alert(`Período ${bimestreAtual} não encontrado.`);
-      return;
-    }
-    
-    if (periodo.status !== "aberto") {
-      alert(`❌ O ${bimestreAtual}º bimestre está fechado para edição.`);
-      return;
-    }
+    if (!periodoAberto) return;
     //Fim da alteração
 
     const { error } = await supabaseClient
