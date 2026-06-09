@@ -756,13 +756,9 @@ window.carregarPeriodos = async function () {
             Abrir
           </button>
         `;
-    const classeLinha =
-    periodo.status === "aberto"
-      ? "table-success"
-      : "table-danger";
 
     tbody.innerHTML += `
-      <tr class="${classeLinha}">
+      <tr>
         <td>${periodo.bimestre}º</td>
         <td>${periodo.descricao}</td>
         <td>${badgeStatus}</td>
