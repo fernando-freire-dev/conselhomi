@@ -780,13 +780,30 @@ window.alterarStatusPeriodo = async function (
 ) {
 
   // =====================================================
+  // 08/06/2026 - Obtém usuário autenticado e perfil
+  // =====================================================
+  
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  
+  const { data: profile, error: profileError } = await supabaseClient
+    .from("profiles")
+    .select("nome, role")
+    .eq("id", user.id)
+    .single();
+  
+  if (profileError) {
+    alert("Erro ao identificar usuário.");
+    console.error(profileError);
+    return;
+  }
+  // =====================================================
   // 08/06/2026 - Permite alteração apenas para
   // coordenação e administradores
   // =====================================================
 
   if (
-    usuarioLogado.role !== "coordenacao" &&
-    usuarioLogado.role !== "admin"
+    profile.role !== "coordenacao" &&
+    profile.role !== "admin"
   ) {
     alert("Você não possui permissão para alterar períodos.");
     return;
@@ -802,7 +819,7 @@ window.alterarStatusPeriodo = async function (
     .from("periodos")
     .update({
       status: novoStatus,
-      alterado_por: usuarioLogado.nome,
+      alterado_por: profile.nome,
       data_alteracao: new Date().toISOString()
     })
     .eq("bimestre", bimestre);
