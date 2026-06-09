@@ -709,8 +709,7 @@ function renderPreviewNotasFaltasCoordenacao({ turmaInfo, bimestre, alunos, disc
 // Nova Aba - Carrega os períodos cadastrados - 08/06/2026
 // =====================================================
 
-async function carregarPeriodos() {
-
+window.carregarPeriodos = async function () {
   const { data, error } = await supabaseClient
     .from("periodos")
     .select("*")
