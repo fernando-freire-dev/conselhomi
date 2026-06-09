@@ -732,9 +732,9 @@ window.carregarPeriodos = async function () {
     // =====================================================
 
     const badgeStatus =
-      periodo.status === "aberto"
-        ? '<span class="badge bg-success">Aberto</span>'
-        : '<span class="badge bg-danger">Fechado</span>';
+  periodo.status === "aberto"
+    ? '<span class="badge bg-success-subtle text-success border border-success-subtle">🟢 Aberto</span>'
+    : '<span class="badge bg-danger-subtle text-danger border border-danger-subtle">🔒 Fechado</span>';
 
     // =====================================================
     // 08/06/2026 - Define a ação disponível para o período
