@@ -726,17 +726,82 @@ window.carregarPeriodos = async function () {
 
   data.forEach(periodo => {
 
+    // =====================================================
+    // 08/06/2026 - Define a ação disponível para o período
+    // =====================================================
+    
+    const botaoAcao =
+      periodo.status === "aberto"
+        ? `
+          <button
+            class="btn btn-danger btn-sm"
+            onclick="alterarStatusPeriodo(${periodo.bimestre}, 'fechado')">
+    
+            Fechar
+    
+          </button>
+        `
+        : `
+          <button
+            class="btn btn-success btn-sm"
+            onclick="alterarStatusPeriodo(${periodo.bimestre}, 'aberto')">
+    
+            Abrir
+    
+          </button>
+        `;
+
     tbody.innerHTML += `
       <tr>
         <td>${periodo.bimestre}º</td>
         <td>${periodo.descricao}</td>
-        <td>${periodo.status}</td>
-        <td>
-          Em breve...
-        </td>
+        // =====================================================
+        // 08/06/2026 - Define o badge de status do período
+        // =====================================================
+        
+        const badgeStatus =
+          periodo.status === "aberto"
+            ? '<span class="badge bg-success">Aberto</span>'
+            : '<span class="badge bg-danger">Fechado</span>';
+        <td>${badgeStatus}</td>
+        <td>${botaoAcao}</td>
       </tr>
     `;
 
   });
 
 }
+
+// =====================================================
+// 08/06/2026 - Atualiza o status do período
+// =====================================================
+
+window.alterarStatusPeriodo = async function (
+  bimestre,
+  novoStatus
+) {
+
+  const confirmar = confirm(
+    `Deseja alterar o ${bimestre}º bimestre para "${novoStatus}"?`
+  );
+
+  if (!confirmar) return;
+
+  const { error } = await supabaseClient
+    .from("periodos")
+    .update({
+      status: novoStatus
+    })
+    .eq("bimestre", bimestre);
+
+  if (error) {
+    alert("Erro ao atualizar período.");
+    console.error(error);
+    return;
+  }
+
+  alert("Status atualizado com sucesso!");
+
+  carregarPeriodos();
+
+};
