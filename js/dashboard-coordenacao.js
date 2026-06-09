@@ -777,7 +777,20 @@ window.carregarPeriodos = async function () {
 window.alterarStatusPeriodo = async function (
   bimestre,
   novoStatus
-) {
+) 
+  // =====================================================
+  // 08/06/2026 - Permite alteração apenas para
+  // coordenação e administradores
+  // =====================================================
+  
+  if (
+    usuarioLogado.role !== "coordenacao" &&
+    usuarioLogado.role !== "admin"
+  ) {
+    alert("Você não possui permissão para alterar períodos.");
+    return;
+  }
+{
 
   const confirmar = confirm(
     `Deseja alterar o ${bimestre}º bimestre para "${novoStatus}"?`
