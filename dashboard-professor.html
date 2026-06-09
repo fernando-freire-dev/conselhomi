@@ -67,14 +67,25 @@
 	
 	  <div class="row justify-content-center">
 	
-	    <div class="col-md-4 mb-3">
+	    <!-- 09/06 - Substituindo por Gerenciar Alunos
+		<div class="col-md-4 mb-3">
 	      <button 
 	        class="menu-btn btn-notas w-100"
 	        onclick="abrirLancamento()">
 	        📊<br>
 	        Lançar Notas
 	      </button>
-	    </div>
+	    </div>-->
+
+		<!--Nova função para o professor representante-->
+		<div class="col-md-4 mb-3" id="cardGerenciarAlunos" style="display:none;">
+		  <button
+		    class="menu-btn btn-notas w-100"
+		    onclick="window.location.href='alunos-turma.html'">
+		    👨‍🎓<br>
+		    Gerenciar Alunos
+		  </button>
+		</div>
 	
 	    <div class="col-md-4 mb-3">
 	      <button
