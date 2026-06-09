@@ -706,10 +706,11 @@ function renderPreviewNotasFaltasCoordenacao({ turmaInfo, bimestre, alunos, disc
 }
 
 // =====================================================
-// Nova Aba - Carrega os períodos cadastrados - 08/06/2026
+// 08/06/2026 - Carrega os períodos cadastrados
 // =====================================================
 
 window.carregarPeriodos = async function () {
+
   const { data, error } = await supabaseClient
     .from("periodos")
     .select("*")
@@ -727,27 +728,32 @@ window.carregarPeriodos = async function () {
   data.forEach(periodo => {
 
     // =====================================================
+    // 08/06/2026 - Define o badge de status do período
+    // =====================================================
+
+    const badgeStatus =
+      periodo.status === "aberto"
+        ? '<span class="badge bg-success">Aberto</span>'
+        : '<span class="badge bg-danger">Fechado</span>';
+
+    // =====================================================
     // 08/06/2026 - Define a ação disponível para o período
     // =====================================================
-    
+
     const botaoAcao =
       periodo.status === "aberto"
         ? `
           <button
             class="btn btn-danger btn-sm"
             onclick="alterarStatusPeriodo(${periodo.bimestre}, 'fechado')">
-    
             Fechar
-    
           </button>
         `
         : `
           <button
             class="btn btn-success btn-sm"
             onclick="alterarStatusPeriodo(${periodo.bimestre}, 'aberto')">
-    
             Abrir
-    
           </button>
         `;
 
@@ -755,14 +761,6 @@ window.carregarPeriodos = async function () {
       <tr>
         <td>${periodo.bimestre}º</td>
         <td>${periodo.descricao}</td>
-        // =====================================================
-        // 08/06/2026 - Define o badge de status do período
-        // =====================================================
-        
-        const badgeStatus =
-          periodo.status === "aberto"
-            ? '<span class="badge bg-success">Aberto</span>'
-            : '<span class="badge bg-danger">Fechado</span>';
         <td>${badgeStatus}</td>
         <td>${botaoAcao}</td>
       </tr>
@@ -770,7 +768,7 @@ window.carregarPeriodos = async function () {
 
   });
 
-}
+};
 
 // =====================================================
 // 08/06/2026 - Atualiza o status do período
