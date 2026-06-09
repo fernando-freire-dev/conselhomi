@@ -498,26 +498,31 @@ async function confirmarRemoverAluno(alunoId, nome) {
 //09_06 Função para mudar a situação do aluno para "Transferido"
 async function transferirAluno(ra, nome) {
 
+  console.log("RA recebido:", ra);
+
   const confirmar = confirm(
-    `Deseja transferir o aluno ${nome}?\n\nEle deixará de aparecer na turma, mas seu histórico será preservado.`
+    `Deseja transferir o aluno ${nome}?`
   );
 
   if (!confirmar) return;
 
-  const { error } = await supabaseClient
+  const { data, error } = await supabaseClient
     .from("alunos")
     .update({
       situacao: "transferido"
     })
-    .eq("id", ra);
+    .eq("id", ra)
+    .select();
+
+  console.log("Resultado:", data);
+  console.log("Erro:", error);
 
   if (error) {
-    console.error(error);
-    alert("Erro ao transferir aluno.");
+    alert("Erro ao transferir.");
     return;
   }
 
-  alert("Aluno transferido com sucesso.");
+  alert("Transferência concluída.");
 
   await loadAlunos();
 }
