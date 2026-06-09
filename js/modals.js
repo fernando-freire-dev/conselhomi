@@ -307,8 +307,9 @@ async function loadAlunos() {
 
   const { data, error } = await supabaseClient
     .from("alunos")
-    .select("id, nome, numero_chamada")
+    .select("id, nome, numero_chamada, situacao")
     .eq("turma_id", turmaId)
+    .eq("situacao", "ativo")
     .order("numero_chamada", { ascending: true, nullsFirst: false })
     .order("nome", { ascending: true });
 
@@ -358,6 +359,10 @@ function renderAlunos() {
               <button class="btn btn-sm btn-outline-danger"
                 onclick="confirmarRemoverAluno('${a.id}', '${a.nome.replace(/'/g, "\\'")}')">
                 Remover
+              </button>
+              <button class="btn btn-sm btn-outline-danger"
+                onclick="transferirAluno('${a.id}', '${a.nome.replace(/'/g, "\\'")}')">
+                Transferir
               </button>
             </td>
           </tr>
@@ -487,6 +492,33 @@ async function confirmarRemoverAluno(alunoId, nome) {
   }
 
   alert(`Aluno "${nome}" removido com sucesso!`);
+  await loadAlunos();
+}
+
+//09_06 Função para mudar a situação do aluno para "Transferido"
+async function transferirAluno(ra, nome) {
+
+  const confirmar = confirm(
+    `Deseja transferir o aluno ${nome}?\n\nEle deixará de aparecer na turma, mas seu histórico será preservado.`
+  );
+
+  if (!confirmar) return;
+
+  const { error } = await supabaseClient
+    .from("alunos")
+    .update({
+      situacao: "transferido"
+    })
+    .eq("id", ra);
+
+  if (error) {
+    console.error(error);
+    alert("Erro ao transferir aluno.");
+    return;
+  }
+
+  alert("Aluno transferido com sucesso.");
+
   await loadAlunos();
 }
 
