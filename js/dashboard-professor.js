@@ -29,10 +29,47 @@ async function checkProfessor() {
   }
 
   // Verifica se é representante
+  //Alterado 09_06
+  const { data: representacao } = await supabaseClient
+  .from("professor_turma")
+  .select("id")
+  .eq("professor_id", professorLogado.id)
+  .eq("representante", true);
+
+  if (representacao && representacao.length > 0) {
+
+    const { data: turmaRepresentada } = await supabaseClient
+      .from("professor_turma")
+      .select("turma_id")
+      .eq("professor_id", professorLogado.id)
+      .eq("representante", true)
+      .single();
+  
+    if (turmaRepresentada) {
+      localStorage.setItem(
+        "turma_representada",
+        turmaRepresentada.turma_id
+      );
+    }
+  }
+  
+  /* Função antiga que verificava se o professor é representante
   const { data: representacao } = await supabaseClient
     .from("professor_turma")
     .select("id")
     .eq("professor_id", professorLogado.id);
+    */
+  // 09_06 - Gerencia quem visualiza o botão da turma
+  const cardGerenciarAlunos =
+    document.getElementById("cardGerenciarAlunos");
+  
+  if (
+    cardGerenciarAlunos &&
+    representacao &&
+    representacao.length > 0
+  ) {
+    cardGerenciarAlunos.style.display = "block";
+  }
 
   const btnConselho = document.getElementById("btnConselho");
   if (btnConselho && (!representacao || representacao.length === 0)) {
@@ -224,6 +261,11 @@ function voltarMenu() {
 
 function irParaConselho() {
   window.location.href = "conselho.html";
+}
+
+//Função para carregar a tela de gerenciamento dos alunos da turma do professor representante
+function irParaGerenciarAlunos() {
+  window.location.href = "alunos-turma.html";
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
