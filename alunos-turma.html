@@ -10,19 +10,52 @@
 
 <body class="app-body">
 
-<nav class="navbar navbar-expand-lg navbar-dark app-navbar">
+<nav class="navbar navbar-expand-lg navbar-dark app-navbar sticky-top">
   <div class="container-fluid">
-
-    <a class="navbar-brand" href="dashboard-professor.html">
-      Conselho de Classe
+    <a class="navbar-brand d-flex flex-column lh-1" href="dashboard.html">
+      <span class="brand-school">PEI Manoel Ignácio da Silva</span>
+      <span class="brand-system">Conselho de Classe</span>
     </a>
 
-    <button
-      class="btn btn-outline-light btn-sm"
-      onclick="window.location.href='dashboard-professor.html'">
-      Voltar
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#appNavbar"
+      aria-controls="appNavbar" aria-expanded="false" aria-label="Alternar navegação">
+      <span class="navbar-toggler-icon"></span>
     </button>
 
+    <div class="collapse navbar-collapse" id="appNavbar">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item"><a class="nav-link" href="dashboard.html">Dashboard</a></li>
+
+        <li class="nav-item" data-role="professor,coordenacao">
+			<a class="nav-link" href="#" onclick="abrirLancamento(); return false;">Lançar Notas</a>
+		</li>
+
+        <li class="nav-item" data-role="professor,coordenacao">
+          <a class="nav-link" href="conselho.html">Conselho</a>
+        </li>
+
+        <li class="nav-item" data-role="coordenacao">
+          <a class="nav-link" href="dashboard-coordenacao.html">Coordenação</a>
+        </li>
+
+        <!--
+		<li class="nav-item" data-role="professor">
+          <a class="nav-link" href="dashboard-professor.html">Professor</a>
+        </li>
+		-->
+
+        <li class="nav-item" data-role="admin">
+          <a class="nav-link" href="admin.html">Admin</a>
+        </li>
+		
+      </ul>
+
+      <div class="d-flex align-items-center gap-2">
+        <span class="navbar-text small d-none d-md-inline" id="navUserLabel"></span>
+        <button class="btn btn-outline-light btn-sm" onclick="abrirModalSenha()" type="button">🔑 Senha</button>
+        <button class="btn btn-outline-light btn-sm" id="btnLogout" type="button">Sair</button>
+      </div>
+    </div>
   </div>
 </nav>
 
