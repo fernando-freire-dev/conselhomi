@@ -35,17 +35,22 @@ async function carregarPagina() {
 
   const turmaId = representacao[0].turma_id;
   turmaRepresentada = turmaId;
+  
   const { data: turma, error: erroTurma } = await supabaseClient
     .from("turmas")
     .select("id, nome, ano")
     .eq("id", turmaId)
     .single();
-
+  
   if (turma) {
+  
+    turmaRepresentadaNome =
+      `${turma.nome} - ${turma.ano}`;
+  
     document.getElementById("tituloTurma").innerText =
       `Turma: ${turma.nome} - ${turma.ano}`;
-    
-  await loadAlunos();
+  
+    await loadAlunos();
   }
 }
 
