@@ -103,6 +103,24 @@ function renderAlunos() {
   `;
 }
 
+function abrirModalNovoAlunoRepresentante() {
+
+  abrirModalNovoAluno();
+
+  setTimeout(() => {
+
+    const selectTurma =
+      document.getElementById("novoAlunoTurma");
+
+    if (!selectTurma) return;
+
+    selectTurma.value = turmaRepresentada;
+
+    selectTurma.disabled = true;
+
+  }, 100);
+}
+
 document.addEventListener(
   "DOMContentLoaded",
   carregarPagina
