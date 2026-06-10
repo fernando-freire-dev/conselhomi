@@ -57,8 +57,10 @@ async function carregarPagina() {
   
   console.log("ERRO:", error);
 
-  document.getElementById("tituloTurma").innerText =
-    JSON.stringify(representacao);
+  if (turma) {
+    document.getElementById("tituloTurma").innerText =
+      `Turma: ${turma.nome} - ${turma.ano}`;
+  }
 }
 
 document.addEventListener(
