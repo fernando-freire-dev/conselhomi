@@ -1,4 +1,4 @@
-let professorLogado = null;
+let professorAtual = null;
 
 async function carregarPagina() {
 
@@ -17,7 +17,7 @@ async function carregarPagina() {
     .eq("id", user.id)
     .single();
 
-  professorLogado = profile;
+  professorAtual = profile;
 
   document.getElementById("tituloTurma").innerText =
     `Professor: ${profile.nome}`;
