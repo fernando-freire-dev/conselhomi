@@ -1,6 +1,5 @@
 let professorAtual = null;
 let turmaRepresentada = null;
-let alunosTurma = [];
 
 async function carregarPagina() {
 
