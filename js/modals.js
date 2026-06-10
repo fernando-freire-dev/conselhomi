@@ -457,12 +457,13 @@ async function salvarNovoAluno() {
 
     feedback.innerHTML = `<div class="alert alert-success py-2">Aluno <strong>${nome}</strong> adicionado com sucesso!</div>`;
 
-    // Atualiza a lista se a turma do modal for a mesma do filtro
-    const filtroTurma = document.getElementById("filtroTurmaAlunos");
-    if (filtroTurma && (!filtroTurma.value || filtroTurma.value === turmaId)) {
-      filtroTurma.value = turmaId;
+    // Atualiza a lista da página atual
+    if (typeof loadAlunos === "function") {
       await loadAlunos();
     }
+    document.getElementById("novoAlunoNome").value = "";
+    document.getElementById("novoAlunoRA").value = "";
+    document.getElementById("novoAlunoNumeroChamada").value = "";
 
     setTimeout(() => modalNovoAlunoInstance?.hide(), 1500);
 
