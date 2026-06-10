@@ -66,7 +66,7 @@ async function carregarPagina() {
   }
 }
 
-let todosAlunos = [];
+let alunosTurma = [];
 
 async function loadAlunos() {
 
@@ -82,7 +82,7 @@ async function loadAlunos() {
     return;
   }
 
-  todosAlunos = data || [];
+  alunosTurma = data || [];
 
   renderAlunos();
 }
@@ -91,7 +91,7 @@ function renderAlunos() {
 
   const lista = document.getElementById("listaAlunos");
 
-  if (!todosAlunos.length) {
+  if (!alunosTurma.length) {
     lista.innerHTML =
       `<p class="text-muted">Nenhum aluno encontrado.</p>`;
     return;
@@ -108,7 +108,7 @@ function renderAlunos() {
         </tr>
       </thead>
       <tbody>
-        ${todosAlunos.map(a => `
+        ${alunosTurma.map(a => `
           <tr>
             <td>${a.numero_chamada ?? "-"}</td>
             <td>${a.nome}</td>
