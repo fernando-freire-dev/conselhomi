@@ -7,9 +7,13 @@ async function carregarPagina() {
   
   async function carregarPagina() {
   
+    console.log("PASSO 1");
+  
     const {
       data: { user }
     } = await supabaseClient.auth.getUser();
+  
+    console.log("PASSO 2", user);
   
     if (!user) {
       window.location.href = "index.html";
@@ -22,7 +26,11 @@ async function carregarPagina() {
       .eq("id", user.id)
       .single();
   
+    console.log("PASSO 3", profile);
+  
     professorAtual = profile;
+  
+    console.log("PASSO 4");
   
     // Busca a turma representada pelo professor
     const { data: representacao, error } = await supabaseClient
