@@ -1,17 +1,11 @@
 let professorAtual = null;
 let turmaRepresentada = null;
 
-console.log("ALUNOS-TURMA CARREGADO");
-
 async function carregarPagina() {
-
-  console.log("PASSO 1");
 
   const {
     data: { user }
   } = await supabaseClient.auth.getUser();
-
-  console.log("PASSO 2", user);
 
   if (!user) {
     window.location.href = "index.html";
@@ -24,9 +18,6 @@ async function carregarPagina() {
     .eq("id", user.id)
     .single();
 
-  console.log("PASSO 3", profile);
-  console.log("ERRO PROFILE:", erroProfile);
-
   if (!profile) {
     document.getElementById("tituloTurma").innerText =
       "Perfil não encontrado.";
@@ -34,17 +25,13 @@ async function carregarPagina() {
   }
 
   professorAtual = profile;
-
-  console.log("PASSO 4");
-
+  
   const { data: representacao, error } = await supabaseClient
     .from("professor_turma")
     .select("*")
     .eq("professor_id", professorAtual.id)
     .eq("representante", true);
 
-  console.log("PASSO 5");
-  console.log("REPRESENTAÇÃO:", representacao);
   const turmaId = representacao[0].turma_id;
   turmaRepresentada = turmaId;
   const { data: turma, error: erroTurma } = await supabaseClient
@@ -52,11 +39,6 @@ async function carregarPagina() {
     .select("id, nome, ano")
     .eq("id", turmaId)
     .single();
-  
-  console.log("TURMA:", turma);
-  console.log("ERRO TURMA:", erroTurma);
-  
-  console.log("ERRO:", error);
 
   if (turma) {
     document.getElementById("tituloTurma").innerText =
