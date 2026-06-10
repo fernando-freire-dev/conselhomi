@@ -45,6 +45,16 @@ async function carregarPagina() {
 
   console.log("PASSO 5");
   console.log("REPRESENTAÇÃO:", representacao);
+  const turmaId = representacao[0].turma_id;
+  const { data: turma, error: erroTurma } = await supabaseClient
+    .from("turmas")
+    .select("id, nome, ano")
+    .eq("id", turmaId)
+    .single();
+  
+  console.log("TURMA:", turma);
+  console.log("ERRO TURMA:", erroTurma);
+  
   console.log("ERRO:", error);
 
   document.getElementById("tituloTurma").innerText =
