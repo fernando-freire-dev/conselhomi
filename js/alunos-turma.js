@@ -27,17 +27,15 @@ async function carregarPagina() {
     // Busca a turma representada pelo professor
     const { data: representacao, error } = await supabaseClient
       .from("professor_turma")
-      .select(`
-        turma_id,
-        turmas (
-          id,
-          nome,
-          ano
-        )
-      `)
+      .select("*")
       .eq("professor_id", professorAtual.id)
-      .eq("representante", true)
-      .single();
+      .eq("representante", true);
+    
+    console.log("REPRESENTAÇÃO:", representacao);
+    console.log("ERRO:", error);
+    
+    document.getElementById("tituloTurma").innerText =
+    JSON.stringify(representacao);
   
     if (error || !representacao) {
   
