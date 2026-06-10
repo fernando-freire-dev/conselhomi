@@ -46,6 +46,7 @@ async function carregarPagina() {
   console.log("PASSO 5");
   console.log("REPRESENTAÇÃO:", representacao);
   const turmaId = representacao[0].turma_id;
+  turmaRepresentada = turmaId;
   const { data: turma, error: erroTurma } = await supabaseClient
     .from("turmas")
     .select("id, nome, ano")
@@ -60,7 +61,64 @@ async function carregarPagina() {
   if (turma) {
     document.getElementById("tituloTurma").innerText =
       `Turma: ${turma.nome} - ${turma.ano}`;
+    
+  await loadAlunos();
   }
+}
+
+let todosAlunos = [];
+
+async function loadAlunos() {
+
+  const { data, error } = await supabaseClient
+    .from("alunos")
+    .select("id, nome, numero_chamada, situacao")
+    .eq("turma_id", turmaRepresentada)
+    .eq("situacao", "ativo")
+    .order("numero_chamada", { ascending: true });
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  todosAlunos = data || [];
+
+  renderAlunos();
+}
+
+function renderAlunos() {
+
+  const lista = document.getElementById("listaAlunos");
+
+  if (!todosAlunos.length) {
+    lista.innerHTML =
+      `<p class="text-muted">Nenhum aluno encontrado.</p>`;
+    return;
+  }
+
+  lista.innerHTML = `
+    <table class="table table-bordered align-middle">
+      <thead class="table-light">
+        <tr>
+          <th style="width:60px">Nº</th>
+          <th>Nome</th>
+          <th style="width:130px">RA</th>
+          <th style="width:120px">Situação</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${todosAlunos.map(a => `
+          <tr>
+            <td>${a.numero_chamada ?? "-"}</td>
+            <td>${a.nome}</td>
+            <td>${a.id}</td>
+            <td>${a.situacao}</td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
 }
 
 document.addEventListener(
