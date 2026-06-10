@@ -109,7 +109,7 @@ function renderAlunos() {
   `;
 }
 
-async function abrirModalNovoAlunoRepresentante() {
+function abrirModalNovoAlunoRepresentante() {
 
   abrirModalNovoAluno();
 
@@ -119,6 +119,8 @@ async function abrirModalNovoAlunoRepresentante() {
       document.getElementById("novoAlunoTurma");
 
     if (!selectTurma) return;
+
+    selectTurma.disabled = false;
 
     selectTurma.innerHTML = `
       <option value="${turmaRepresentada}">
