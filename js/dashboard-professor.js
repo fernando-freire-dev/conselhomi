@@ -75,6 +75,12 @@ async function checkProfessor() {
   if (btnConselho && (!representacao || representacao.length === 0)) {
     btnConselho.style.display = "none";
   }
+
+  //09_06 mostra o botão do gerenciamento dos alunos da sala
+  const btnAlunos = document.getElementById("btnAlunos");
+  if (btnAlunos && (!representacao || representacao.length === 0)) {
+    btnAlunos.style.display = "none";
+  }
 }
 
 function normalizarTexto(texto) {
