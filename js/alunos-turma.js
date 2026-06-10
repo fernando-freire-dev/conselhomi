@@ -1,6 +1,10 @@
 let professorAtual = null;
 
+console.log("ALUNOS-TURMA CARREGADO");
+
 async function carregarPagina() {
+
+  console.log("ENTROU EM carregarPagina");
 
   let professorAtual = null;
   let turmaRepresentada = null;
