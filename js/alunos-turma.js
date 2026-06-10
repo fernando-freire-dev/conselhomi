@@ -1,5 +1,6 @@
 let professorAtual = null;
 let turmaRepresentada = null;
+let turmaRepresentadaNome = "";
 
 async function carregarPagina() {
 
@@ -103,7 +104,7 @@ function renderAlunos() {
   `;
 }
 
-function abrirModalNovoAlunoRepresentante() {
+async function abrirModalNovoAlunoRepresentante() {
 
   abrirModalNovoAluno();
 
@@ -114,11 +115,17 @@ function abrirModalNovoAlunoRepresentante() {
 
     if (!selectTurma) return;
 
-    selectTurma.value = turmaRepresentada;
+    selectTurma.innerHTML = `
+      <option value="${turmaRepresentada}">
+        ${turmaRepresentadaNome}
+      </option>
+    `;
 
+    selectTurma.value = turmaRepresentada;
     selectTurma.disabled = true;
 
   }, 100);
+
 }
 
 document.addEventListener(
