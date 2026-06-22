@@ -360,7 +360,7 @@ function renderAlunos() {
                 onclick="confirmarRemoverAluno('${a.id}', '${a.nome.replace(/'/g, "\\'")}')">
                 Remover
               </button>
-              <button class="btn btn-sm btn-outline-danger"
+              <button class="btn btn-sm btn-outline-warning"
                 onclick="transferirAluno('${a.id}', '${a.nome.replace(/'/g, "\\'")}')">
                 Transferir
               </button>
