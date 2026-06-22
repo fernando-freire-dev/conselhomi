@@ -92,7 +92,7 @@ function renderAlunos() {
           <th style="width:60px">Nº</th>
           <th>Nome</th>
           <th style="width:130px">RA</th>
-          <th style="width:120px">Situação</th>
+          <th style="width:120px" class="text-center">Ação</th>
         </tr>
       </thead>
       <tbody>
@@ -101,7 +101,12 @@ function renderAlunos() {
             <td>${a.numero_chamada ?? "-"}</td>
             <td>${a.nome}</td>
             <td>${a.id}</td>
-            <td>${a.situacao}</td>
+            <td class="text-center">
+              <button class="btn btn-sm btn-outline-warning"
+                onclick="transferirAluno('${a.id}', '${a.nome.replace(/'/g, "\\'")}')">
+                Transferir
+              </button>
+            </td>
           </tr>
         `).join("")}
       </tbody>
