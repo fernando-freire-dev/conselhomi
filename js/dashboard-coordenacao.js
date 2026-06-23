@@ -576,9 +576,9 @@ async function visualizarNotasFaltasCoordenacao() {
       }))
       .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
 
-    const { data: alunos, error: errAlunos } = await supabaseClient
+    const { data: todosAlunos, error: errAlunos } = await supabaseClient
       .from("alunos")
-      .select("id, nome, numero_chamada")
+      .select("id, nome, numero_chamada, situacao")
       .eq("turma_id", turmaId)
       .order("numero_chamada", { ascending: true, nullsFirst: false })
       .order("nome", { ascending: true });
@@ -593,7 +593,7 @@ async function visualizarNotasFaltasCoordenacao() {
       .from("notas_frequencia")
       .select("aluno_id, disciplina_id, bimestre, media, faltas")
       .eq("bimestre", parseInt(bimestre, 10))
-      .in("aluno_id", (alunos || []).map(a => a.id));
+      .in("aluno_id", (todosAlunos || []).map(a => a.id));
 
     if (errNotas) {
       console.error(errNotas);
@@ -601,10 +601,17 @@ async function visualizarNotasFaltasCoordenacao() {
       return;
     }
 
+    // Alunos ativos sempre aparecem.
+    // Alunos transferidos só aparecem se tiverem nota no bimestre selecionado.
+    const alunosComNota = new Set((notas || []).map(n => n.aluno_id));
+    const alunos = (todosAlunos || []).filter(a =>
+      a.situacao === "ativo" || alunosComNota.has(a.id)
+    );
+
     renderPreviewNotasFaltasCoordenacao({
       turmaInfo,
       bimestre,
-      alunos: alunos || [],
+      alunos,
       disciplinas,
       notas: notas || []
     });
