@@ -389,7 +389,7 @@ async function montarTabelaAlunos(turmaId, bimestre) {
   window.cacheDisciplinas = disciplinasUnicas;
 
   // Alunos - ordenação pela chamada
-  const { data: alunos, error: errAlunos } = await supabaseClient
+  const { data: todosAlunos, error: errAlunos } = await supabaseClient
     .from("alunos")
     .select("*")
     .eq("turma_id", turmaId)
@@ -402,7 +402,20 @@ async function montarTabelaAlunos(turmaId, bimestre) {
     return;
   }
 
-  const alunosIds = (alunos || []).map(a => a.id);
+  // Alunos ativos sempre entram no conselho.
+  // Transferidos só aparecem se já tiverem registro neste conselho (bimestre anterior).
+  const { data: registrosExistentes } = await supabaseClient
+    .from("conselho_alunos")
+    .select("aluno_id")
+    .eq("conselho_id", conselhoAtual.id);
+
+  const alunosComRegistro = new Set((registrosExistentes || []).map(r => r.aluno_id));
+
+  const alunos = (todosAlunos || []).filter(a =>
+    a.situacao === "ativo" || alunosComRegistro.has(a.id)
+  );
+
+  const alunosIds = alunos.map(a => a.id);
   const disciplinasIds = (disciplinasUnicas || []).map(d => d.id);
 
   // Notas/faltas
