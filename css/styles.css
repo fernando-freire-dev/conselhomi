@@ -131,6 +131,11 @@ body.app-body{
   box-shadow: 0 6px 14px rgba(0,0,0,0.25);
 }
 
+/* GERENCIAR ALUNOS (ROXO) */
+.btn-alunos {
+  background: linear-gradient(135deg, #6f42c1, #5a32a3);
+}
+
 /* LANÇAR NOTAS (AZUL) */
 .btn-notas {
   background: linear-gradient(135deg, #0d6efd, #0b5ed7);
