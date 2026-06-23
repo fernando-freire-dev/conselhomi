@@ -69,6 +69,9 @@ async function checkProfessor() {
     representacao.length > 0
   ) {
     cardGerenciarAlunos.style.display = "block";
+    // Força reflow para a transição funcionar
+    cardGerenciarAlunos.getBoundingClientRect();
+    cardGerenciarAlunos.classList.add("visivel");
   }
 
   const btnConselho = document.getElementById("btnConselho");
