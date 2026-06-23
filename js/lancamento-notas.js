@@ -138,6 +138,7 @@ async function salvarNotas() {
 
 document.addEventListener("DOMContentLoaded", async () => {
   carregarInfo();
+  await carregarBimestreAtivo("bimestreSelect");
   await carregarAlunos();
 
   const fileInput = document.getElementById("inputMapao");
