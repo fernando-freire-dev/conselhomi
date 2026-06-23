@@ -136,6 +136,15 @@ body.app-body{
   background: linear-gradient(135deg, #6f42c1, #5a32a3);
 }
 
+#cardGerenciarAlunos {
+  transition: opacity 0.4s ease;
+  opacity: 0;
+}
+
+#cardGerenciarAlunos.visivel {
+  opacity: 1;
+}
+
 /* LANÇAR NOTAS (AZUL) */
 .btn-notas {
   background: linear-gradient(135deg, #0d6efd, #0b5ed7);
