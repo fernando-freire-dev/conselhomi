@@ -281,11 +281,12 @@ async function processarArquivo(event) {
       return;
     }
 
-    // 5. Buscar alunos da turma no banco
+    // 5. Buscar alunos da turma no banco (apenas ativos)
     const { data: alunos } = await supabaseClient
       .from("alunos")
       .select("id, nome, numero_chamada")
       .eq("turma_id", turmaId)
+      .eq("situacao", "ativo")
       .order("numero_chamada", { ascending: true, nullsFirst: false })
       .order("nome", { ascending: true });
 
