@@ -41,6 +41,8 @@ const sugestoesIndisciplinaLista = [
   "Sai da sala sem autorização",
   "Desrespeita o professor",
   "Atrapalha os colegas",
+  "Muitas Faltas",
+  "Não traz o material",
 ];
 
 function montarSugestoesIndisciplina() {
