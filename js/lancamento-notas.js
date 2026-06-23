@@ -30,6 +30,7 @@ async function carregarAlunos() {
     .from("alunos")
     .select("id, nome, numero_chamada")
     .eq("turma_id", turmaId)
+    .eq("situacao", "ativo")
     .order("numero_chamada", { ascending: true, nullsFirst: false })
     .order("nome", { ascending: true });
 
