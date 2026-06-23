@@ -32,7 +32,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   const b = localStorage.getItem("conselho_bimestre");
 
   if (t) document.getElementById("turmaSelect").value = t;
-  if (b) document.getElementById("bimestreSelect").value = b;
+
+  // Se vier do localStorage usa o bimestre salvo,
+  // senão pré-seleciona o bimestre ativo automaticamente
+  if (b) {
+    document.getElementById("bimestreSelect").value = b;
+  } else {
+    await carregarBimestreAtivo("bimestreSelect");
+  }
 
   if (t && b) {
     await carregarConselho();
