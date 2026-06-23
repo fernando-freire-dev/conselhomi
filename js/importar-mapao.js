@@ -14,6 +14,7 @@ let mapaDiscsGlobal    = {};
 
 document.addEventListener("DOMContentLoaded", async () => {
   await verificarUsuario();
+  await carregarBimestreAtivo("bimestreSelect");
   document.getElementById("inputMapao")
     .addEventListener("change", processarArquivo);
 });
