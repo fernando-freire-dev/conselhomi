@@ -30,6 +30,47 @@ const selecoesModal = {
   plataforma: []
 };
 
+// ═══════════════════════════════════════════════════════════
+// SUGESTÕES DE INDISCIPLINA
+// Adicione, remova ou edite as frases desta lista.
+// Cada item vira um botão clicável no modal do conselho.
+// ═══════════════════════════════════════════════════════════
+const sugestoesIndisciplinaLista = [
+  "Conversa em excesso na sala",
+  "Usa celular sem autorização",
+  "Sai da sala sem autorização",
+  "Desrespeita o professor",
+  "Atrapalha os colegas",
+];
+
+function montarSugestoesIndisciplina() {
+  const container = document.getElementById("sugestoesIndisciplina");
+  if (!container) return;
+
+  container.innerHTML = sugestoesIndisciplinaLista.map(frase => `
+    <button
+      type="button"
+      class="btn btn-outline-secondary btn-sm"
+      onclick="inserirSugestaoIndisciplina('${frase.replace(/'/g, "\'")}')">
+      ${frase}
+    </button>
+  `).join("");
+}
+
+function inserirSugestaoIndisciplina(frase) {
+  const textarea = document.getElementById("modalIndisciplinaTxt");
+  if (!textarea) return;
+
+  const textoAtual = textarea.value.trim();
+
+  // Se já tem texto, adiciona separado por ponto e vírgula
+  textarea.value = textoAtual
+    ? `${textoAtual}; ${frase}`
+    : frase;
+
+  textarea.focus();
+}
+
 function textoParaLista(texto) {
   if (!texto) return [];
   return texto.split(",").map(t => t.trim()).filter(Boolean);
@@ -1044,6 +1085,8 @@ async function salvarAlunoModalAtual() {
 }
 
 document.addEventListener("modalsLoaded", () => {
+  montarSugestoesIndisciplina();
+
   document.querySelectorAll('input[name="modalDificuldade"]').forEach(el => {
     el.addEventListener("change", () => alternarAreaPorRadio("modalDificuldade", "modalDificuldadeArea", "true"));
   });
