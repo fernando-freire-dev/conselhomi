@@ -46,3 +46,33 @@ async function validarPeriodoAberto(bimestre) {
     return false;
   }
 }
+
+// =====================================================
+// Busca o bimestre com status "aberto" e pré-seleciona
+// o <select> informado pelo ID.
+// Retorna o número do bimestre ativo ou null.
+// =====================================================
+async function carregarBimestreAtivo(selectId) {
+
+  const { data, error } = await supabaseClient
+    .from("periodos")
+    .select("bimestre")
+    .eq("status", "aberto")
+    .order("bimestre")
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Erro ao buscar bimestre ativo:", error);
+    return null;
+  }
+
+  if (!data) return null;
+
+  const select = document.getElementById(selectId);
+  if (select) {
+    select.value = String(data.bimestre);
+  }
+
+  return data.bimestre;
+}
