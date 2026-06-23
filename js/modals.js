@@ -41,6 +41,8 @@ const sugestoesIndisciplinaLista = [
   "Sai da sala sem autorização",
   "Desrespeita o professor",
   "Atrapalha os colegas",
+  "Muitas Faltas",
+  "Não traz o material",
 ];
 
 function montarSugestoesIndisciplina() {
@@ -874,71 +876,13 @@ window.abrirModalConselho = async function(index) {
     }
   }
 
-  // Verifica se o conselho está bloqueado para edição
-  const bloqueado = verificarBloqueioModal();
-  aplicarBloqueioModal(bloqueado);
 
   bootstrap.Modal.getOrCreateInstance(
     document.getElementById("modalConselhoAluno")
   ).show();
 };
 
-// Retorna true se o conselho estiver finalizado ou fora do prazo do professor
-function verificarBloqueioModal() {
-  if (!window.conselhoAtual) return false;
-  if (!window.usuarioLogado) return false;
-
-  // Coordenação nunca é bloqueada
-  if (window.usuarioLogado.role === "coordenacao") return false;
-
-  if (window.conselhoAtual.status === "finalizado") return true;
-
-  if (window.usuarioLogado.role === "professor") {
-    const dataBaseStr = window.conselhoAtual.data_conselho || window.conselhoAtual.created_at || null;
-    const dataConselho = dataBaseStr ? new Date(dataBaseStr) : null;
-    if (dataConselho && !isNaN(dataConselho.getTime())) {
-      const diffDias = (Date.now() - dataConselho.getTime()) / (1000 * 60 * 60 * 24);
-      if (diffDias > 5) return true;
-    }
-  }
-
-  return false;
-}
-
-// Aplica ou remove o bloqueio nos campos e botões do modal
-function aplicarBloqueioModal(bloqueado) {
-  const modal = document.getElementById("modalConselhoAluno");
-  if (!modal) return;
-
-  // Campos do modal
-  modal.querySelectorAll("input, select, textarea").forEach(el => {
-    el.disabled = bloqueado;
-  });
-
-  // Botões de sugestão de indisciplina
-  modal.querySelectorAll("#sugestoesIndisciplina button").forEach(btn => {
-    btn.disabled = bloqueado;
-  });
-
-  // Botões de ação: salvar, selecionar disciplinas
-  const botoesBloqueaveis = [
-    "btnSalvarAluno",
-    "btnSelecionarDificuldade",
-    "btnSelecionarSala",
-    "btnSelecionarPlataforma",
-  ];
-  botoesBloqueaveis.forEach(id => {
-    const btn = document.getElementById(id);
-    if (btn) btn.disabled = bloqueado;
-  });
-}
-
 async function salvarAlunoModalAtual() {
-  // Barreira de segurança: não salva se bloqueado
-  if (verificarBloqueioModal()) {
-    bootstrap.Modal.getInstance(document.getElementById("modalConselhoAluno"))?.hide();
-    return false;
-  }
 
   const linhas = document.querySelectorAll("#corpoTabela tr");
   const linha = linhas[alunoAtualIndex];
