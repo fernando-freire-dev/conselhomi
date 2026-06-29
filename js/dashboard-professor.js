@@ -84,6 +84,18 @@ async function checkProfessor() {
   if (btnAlunos && (!representacao || representacao.length === 0)) {
     btnAlunos.style.display = "none";
   }
+
+  // ── Verifica se é professor tutor ──────────────────────────
+  const { data: tutorias } = await supabaseClient
+    .from("tutorias")
+    .select("aluno_id")
+    .eq("professor_id", professorLogado.id)
+    .limit(1);
+
+  const cardTutorados = document.getElementById("cardTutorados");
+  if (cardTutorados && tutorias && tutorias.length > 0) {
+    cardTutorados.style.display = "block";
+  }
 }
 
 function normalizarTexto(texto) {
