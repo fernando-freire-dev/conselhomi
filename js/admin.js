@@ -596,7 +596,7 @@ function fecharModal() {
 
 //Mostrar as seções da página admin
 function mostrarSecao(secao) {
-  const secoes = ["perfil", "turma", "vinculo", "vinculo-academico", "disciplinas"];
+  const secoes = ["perfil", "turma", "vinculo", "vinculo-academico", "disciplinas", "tutoria"];
 
   secoes.forEach(s => {
     const div = document.getElementById("secao-" + s);
@@ -605,8 +605,9 @@ function mostrarSecao(secao) {
     }
   });
 
-  // Carrega disciplinas ao entrar na seção
+  // Carrega dados ao entrar em cada seção
   if (secao === "disciplinas") loadDisciplinasAdmin();
+  if (secao === "tutoria") inicializarSecaoTutoria();
 }
 
 // ── Gerenciamento de Apelidos de Disciplinas ──────────────────
@@ -1135,6 +1136,382 @@ document.addEventListener("click", function (e) {
     lista.innerHTML = "";
   }
 });
+
+// ═══════════════════════════════════════════════════════════════
+// SEÇÃO TUTORIA — gerenciamento de vínculos professor tutor ↔ aluno
+// ═══════════════════════════════════════════════════════════════
+
+let tutorSelecionadoId = null;       // id do professor selecionado no select
+let tutoradosAdminCache = [];        // lista de tutorados do tutor atual
+let todosAlunosCache = [];           // cache para o modal de busca
+let tutoriasExistentesCache = {};    // chave: aluno_id → nome do tutor atual
+let modalAdicionarTutoradoInstance = null;
+
+// Chamado ao entrar na seção — carrega o select de professores e turmas do modal
+async function inicializarSecaoTutoria() {
+  await carregarSelectTutorAdmin();
+  await carregarTurmasParaModalTutorado();
+}
+
+// Popula o select de professores tutores
+async function carregarSelectTutorAdmin() {
+  const select = document.getElementById("selectTutorAdmin");
+  if (!select) return;
+
+  const valorAtual = tutorSelecionadoId || select.value;
+
+  const { data, error } = await supabaseClient
+    .from("profiles")
+    .select("id, nome")
+    .eq("role", "professor")
+    .order("nome", { ascending: true });
+
+  if (error) { console.error(error); return; }
+
+  select.innerHTML = `<option value="">Selecione um professor...</option>`;
+  (data || []).forEach(p => {
+    select.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
+  });
+
+  if (valorAtual) {
+    select.value = valorAtual;
+    if (select.value) await carregarTutoradosAdmin();
+  }
+}
+
+// Carrega turmas para o filtro dentro do modal de adicionar tutorado
+async function carregarTurmasParaModalTutorado() {
+  const select = document.getElementById("filtroTurmaModalTutorado");
+  if (!select) return;
+
+  const { data, error } = await supabaseClient
+    .from("turmas")
+    .select("id, nome, ano, ensino")
+    .order("nome", { ascending: true });
+
+  if (error) { console.error(error); return; }
+
+  select.innerHTML = `<option value="">Todas as turmas</option>`;
+  (data || []).forEach(t => {
+    select.innerHTML += `<option value="${t.id}">${t.nome} - ${t.ano}</option>`;
+  });
+}
+
+// Carrega os tutorados do professor selecionado e preenche a tabela
+async function carregarTutoradosAdmin() {
+  const select = document.getElementById("selectTutorAdmin");
+  tutorSelecionadoId = select?.value || null;
+
+  const btnAdicionar = document.getElementById("btnAdicionarTutorado");
+  const cardTabela   = document.getElementById("cardTabelaTutorados");
+  const titulo       = document.getElementById("tituloTabelaTutorados");
+  const contador     = document.getElementById("contadorTutoradosAdmin");
+
+  if (!tutorSelecionadoId) {
+    if (btnAdicionar) btnAdicionar.disabled = true;
+    if (cardTabela) cardTabela.style.display = "none";
+    if (contador) contador.textContent = "";
+    tutoradosAdminCache = [];
+    return;
+  }
+
+  if (btnAdicionar) btnAdicionar.disabled = false;
+  if (cardTabela) cardTabela.style.display = "block";
+
+  // Nome do tutor para o título
+  const nomeOpcao = select.options[select.selectedIndex]?.text || "Professor";
+  if (titulo) titulo.textContent = `Tutorados de ${nomeOpcao}`;
+
+  // Busca tutorados com dados do aluno e turma
+  const { data, error } = await supabaseClient
+    .from("tutorias")
+    .select(`
+      id,
+      aluno_id,
+      alunos (
+        id,
+        nome,
+        numero_chamada,
+        situacao,
+        turma_id,
+        turmas ( nome, ano )
+      )
+    `)
+    .eq("professor_id", tutorSelecionadoId)
+    .order("aluno_id");
+
+  if (error) {
+    console.error(error);
+    document.getElementById("corpoTabelaTutorados").innerHTML =
+      `<tr><td colspan="4" class="text-center text-danger">Erro ao carregar tutorados.</td></tr>`;
+    return;
+  }
+
+  tutoradosAdminCache = data || [];
+
+  if (contador) {
+    contador.textContent = `${tutoradosAdminCache.length} tutorado(s) vinculado(s)`;
+  }
+
+  renderTabelaTutoradosAdmin(tutoradosAdminCache);
+}
+
+// Renderiza a tabela de tutorados com filtro de busca aplicado
+function renderTabelaTutoradosAdmin(lista) {
+  const corpo = document.getElementById("corpoTabelaTutorados");
+  const msg   = document.getElementById("msgTabelaTutorados");
+  if (!corpo) return;
+
+  const termo = (document.getElementById("buscaTutoradoAdmin")?.value || "").toLowerCase().trim();
+
+  let filtrada = lista;
+  if (termo) {
+    filtrada = lista.filter(t =>
+      (t.alunos?.nome || "").toLowerCase().includes(termo) ||
+      String(t.aluno_id).includes(termo)
+    );
+  }
+
+  if (filtrada.length === 0) {
+    corpo.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-3">Nenhum tutorado encontrado.</td></tr>`;
+    if (msg) msg.textContent = "";
+    return;
+  }
+
+  // Ordena por número de chamada depois por nome
+  const ordenados = [...filtrada].sort((a, b) => {
+    const nA = a.alunos?.numero_chamada ?? 9999;
+    const nB = b.alunos?.numero_chamada ?? 9999;
+    if (nA !== nB) return nA - nB;
+    return (a.alunos?.nome || "").localeCompare(b.alunos?.nome || "", "pt-BR");
+  });
+
+  const situacaoBadge = (sit) => sit === "transferido"
+    ? `<span class="badge bg-warning text-dark ms-1">Transferido</span>` : "";
+
+  corpo.innerHTML = ordenados.map(t => `
+    <tr>
+      <td class="text-center">${t.alunos?.numero_chamada ?? "—"}</td>
+      <td>
+        ${t.alunos?.nome || t.aluno_id}
+        ${situacaoBadge(t.alunos?.situacao)}
+      </td>
+      <td>${t.alunos?.turmas ? `${t.alunos.turmas.nome} - ${t.alunos.turmas.ano}` : "—"}</td>
+      <td class="text-center">
+        <button class="btn btn-sm btn-outline-danger"
+          onclick="removerTutorado('${t.id}', '${(t.alunos?.nome || t.aluno_id).replace(/'/g, "\\'")}')">
+          Remover
+        </button>
+      </td>
+    </tr>
+  `).join("");
+
+  if (msg) msg.textContent = `Exibindo ${filtrada.length} de ${lista.length} tutorado(s).`;
+}
+
+// Filtra a tabela ao digitar na busca
+function filtrarTabelaTutoradosAdmin() {
+  renderTabelaTutoradosAdmin(tutoradosAdminCache);
+}
+
+// Remove o vínculo de tutoria
+async function removerTutorado(tutoriaId, nomeAluno) {
+  const confirmar = confirm(
+    `Deseja remover o vínculo de tutoria com "${nomeAluno}"?\n\nO aluno ficará sem professor tutor.`
+  );
+  if (!confirmar) return;
+
+  const { error } = await supabaseClient
+    .from("tutorias")
+    .delete()
+    .eq("id", tutoriaId);
+
+  if (error) {
+    alert("Erro ao remover vínculo: " + error.message);
+    console.error(error);
+    return;
+  }
+
+  alert(`Vínculo com "${nomeAluno}" removido com sucesso!`);
+  await carregarTutoradosAdmin();
+}
+
+// Abre modal para adicionar novo tutorado
+async function abrirModalAdicionarTutorado() {
+  if (!tutorSelecionadoId) {
+    alert("Selecione um professor tutor primeiro.");
+    return;
+  }
+
+  // Limpa busca
+  const inputBusca = document.getElementById("buscaAlunoTutorado");
+  if (inputBusca) inputBusca.value = "";
+
+  const filtroTurma = document.getElementById("filtroTurmaModalTutorado");
+  if (filtroTurma) filtroTurma.value = "";
+
+  document.getElementById("feedbackModalTutorado").innerHTML = "";
+  document.getElementById("corpoModalBuscaAluno").innerHTML =
+    `<tr><td colspan="5" class="text-center text-muted py-3">Use os filtros acima para buscar alunos.</td></tr>`;
+
+  // Pré-carrega o mapa de tutorias existentes (aluno_id → nome do tutor)
+  await carregarMapaTutorias();
+
+  const modalEl = document.getElementById("modalAdicionarTutorado");
+  if (!modalAdicionarTutoradoInstance) {
+    modalAdicionarTutoradoInstance = new bootstrap.Modal(modalEl);
+  }
+  modalAdicionarTutoradoInstance.show();
+}
+
+// Carrega todas as tutorias existentes para saber quem já tem tutor
+async function carregarMapaTutorias() {
+  const { data, error } = await supabaseClient
+    .from("tutorias")
+    .select(`
+      aluno_id,
+      professor_id,
+      profiles ( nome )
+    `);
+
+  if (error) { console.error(error); return; }
+
+  tutoriasExistentesCache = {};
+  (data || []).forEach(t => {
+    tutoriasExistentesCache[t.aluno_id] = t.profiles?.nome || "Outro professor";
+  });
+}
+
+// Busca alunos para o modal com filtros aplicados
+async function buscarAlunosParaTutorado() {
+  const turmaId = document.getElementById("filtroTurmaModalTutorado")?.value || "";
+  const termo   = (document.getElementById("buscaAlunoTutorado")?.value || "").toLowerCase().trim();
+  const corpo   = document.getElementById("corpoModalBuscaAluno");
+
+  if (!turmaId && termo.length < 2) {
+    corpo.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-3">Digite ao menos 2 caracteres ou selecione uma turma.</td></tr>`;
+    return;
+  }
+
+  corpo.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-2"><div class="spinner-border spinner-border-sm me-1"></div>Buscando...</td></tr>`;
+
+  let query = supabaseClient
+    .from("alunos")
+    .select(`
+      id,
+      nome,
+      numero_chamada,
+      situacao,
+      turma_id,
+      turmas ( nome, ano )
+    `)
+    .eq("situacao", "ativo")
+    .order("numero_chamada", { ascending: true, nullsFirst: false })
+    .order("nome", { ascending: true });
+
+  if (turmaId) query = query.eq("turma_id", turmaId);
+
+  const { data, error } = await query;
+
+  if (error) {
+    corpo.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Erro ao buscar alunos.</td></tr>`;
+    console.error(error);
+    return;
+  }
+
+  let lista = data || [];
+
+  // Filtra por nome/RA se houver termo
+  if (termo) {
+    lista = lista.filter(a =>
+      a.nome.toLowerCase().includes(termo) ||
+      String(a.id).includes(termo)
+    );
+  }
+
+  if (lista.length === 0) {
+    corpo.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-3">Nenhum aluno encontrado com esses filtros.</td></tr>`;
+    return;
+  }
+
+  corpo.innerHTML = lista.map(aluno => {
+    const tutorAtual = tutoriasExistentesCache[aluno.id] || null;
+    const jaEhTutoradoDesteProfessor = tutoradosAdminCache.some(t => t.aluno_id === aluno.id);
+    const jaTemOutroTutor = tutorAtual && !jaEhTutoradoDesteProfessor;
+
+    const turmaNome = aluno.turmas ? `${aluno.turmas.nome} - ${aluno.turmas.ano}` : "—";
+
+    const tutorCell = jaEhTutoradoDesteProfessor
+      ? `<span class="badge bg-success">Já tutorado</span>`
+      : tutorAtual
+        ? `<span class="text-muted small">${tutorAtual}</span>`
+        : `<span class="text-muted small">—</span>`;
+
+    const btnAdicionar = jaEhTutoradoDesteProfessor
+      ? `<button class="btn btn-sm btn-outline-secondary" disabled>Já adicionado</button>`
+      : jaTemOutroTutor
+        ? `<button class="btn btn-sm btn-warning" onclick="vincularTutorado('${aluno.id}', '${aluno.nome.replace(/'/g, "\\'")}', true)">Trocar tutor</button>`
+        : `<button class="btn btn-sm btn-success" onclick="vincularTutorado('${aluno.id}', '${aluno.nome.replace(/'/g, "\\'")}', false)">Adicionar</button>`;
+
+    return `
+      <tr>
+        <td class="text-center">${aluno.numero_chamada ?? "—"}</td>
+        <td class="fw-semibold">${aluno.nome}</td>
+        <td>${turmaNome}</td>
+        <td>${tutorCell}</td>
+        <td class="text-center">${btnAdicionar}</td>
+      </tr>
+    `;
+  }).join("");
+}
+
+// Cria ou atualiza o vínculo de tutoria
+async function vincularTutorado(alunoId, nomeAluno, trocarTutor) {
+  const feedback = document.getElementById("feedbackModalTutorado");
+
+  if (trocarTutor) {
+    const tutorAnterior = tutoriasExistentesCache[alunoId] || "outro professor";
+    const confirmar = confirm(
+      `"${nomeAluno}" já possui tutor (${tutorAnterior}).\n\nDeseja transferir a tutoria para o professor selecionado?`
+    );
+    if (!confirmar) return;
+
+    // Remove tutoria antiga
+    const { error: errDel } = await supabaseClient
+      .from("tutorias")
+      .delete()
+      .eq("aluno_id", alunoId);
+
+    if (errDel) {
+      feedback.innerHTML = `<div class="alert alert-danger py-2">Erro ao remover tutoria anterior: ${errDel.message}</div>`;
+      console.error(errDel);
+      return;
+    }
+  }
+
+  // Insere novo vínculo
+  const { error } = await supabaseClient
+    .from("tutorias")
+    .insert([{ professor_id: tutorSelecionadoId, aluno_id: alunoId }]);
+
+  if (error) {
+    feedback.innerHTML = `<div class="alert alert-danger py-2">Erro ao vincular: ${error.message}</div>`;
+    console.error(error);
+    return;
+  }
+
+  feedback.innerHTML = `<div class="alert alert-success py-2">✅ "${nomeAluno}" vinculado com sucesso!</div>`;
+
+  // Atualiza caches e re-renderiza
+  tutoriasExistentesCache[alunoId] = (document.getElementById("selectTutorAdmin")?.options[document.getElementById("selectTutorAdmin")?.selectedIndex]?.text) || "Este professor";
+  await carregarTutoradosAdmin();
+  await buscarAlunosParaTutorado(); // re-renderiza a lista do modal com estado atualizado
+
+  // Limpa feedback após 2s
+  setTimeout(() => {
+    if (feedback) feedback.innerHTML = "";
+  }, 2500);
+}
 
 document.addEventListener("DOMContentLoaded", async () => {
   await checkAdmin();
