@@ -113,6 +113,10 @@ body.app-body{
 .app-navbar .nav-link { padding-top: .65rem; padding-bottom: .65rem; }
 .app-navbar .navbar-text { margin: 0; }
 
+/* ============================================================
+   BOTÕES DO MENU PRINCIPAL DO PROFESSOR
+   ============================================================ */
+
 /* BOTÃO PADRÃO DO MENU */
 .menu-btn {
   height: 120px;
@@ -131,22 +135,9 @@ body.app-body{
   box-shadow: 0 6px 14px rgba(0,0,0,0.25);
 }
 
-/* GERENCIAR ALUNOS (ROXO) */
+/* LANÇAR NOTAS / GERENCIAR ALUNOS (AZUL) */
+.btn-notas,
 .btn-alunos {
-  background: linear-gradient(135deg, #6f42c1, #5a32a3);
-}
-
-#cardGerenciarAlunos {
-  transition: opacity 0.4s ease;
-  opacity: 0;
-}
-
-#cardGerenciarAlunos.visivel {
-  opacity: 1;
-}
-
-/* LANÇAR NOTAS (AZUL) */
-.btn-notas {
   background: linear-gradient(135deg, #0d6efd, #0b5ed7);
 }
 
@@ -160,9 +151,14 @@ body.app-body{
   background: linear-gradient(135deg, #fd7e14, #e8590c);
 }
 
-/* ============================================
-   DESTAQUES VISUAIS
-   ============================================ */
+/* TUTORIA (ROXO) */
+.btn-tutoria {
+  background: linear-gradient(135deg, #6f42c1, #5a32a3);
+}
+
+/* ============================================================
+   DESTAQUES VISUAIS DE NOTAS E FALTAS
+   ============================================================ */
 
 /* NOTAS ABAIXO DE 5 - tudo em vermelho */
 .nota-baixa,
