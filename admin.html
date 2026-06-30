@@ -258,11 +258,17 @@
 
       <!-- Tabela de tutorados do professor selecionado -->
       <div class="card p-4 mb-4" id="cardTabelaTutorados" style="display:none;">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
           <h5 class="mb-0" id="tituloTabelaTutorados">Tutorados</h5>
           <div class="d-flex gap-2 align-items-center">
+            <label class="small text-muted mb-0">Ordenar por:</label>
+            <select id="ordenacaoTutoradosAdmin" class="form-select form-select-sm" style="width:160px;" onchange="filtrarTabelaTutoradosAdmin()">
+              <option value="chamada">Nº de Chamada</option>
+              <option value="nome">Nome</option>
+              <option value="turma">Turma</option>
+            </select>
             <input type="text" id="buscaTutoradoAdmin" class="form-control form-control-sm"
-              placeholder="Buscar por nome..." oninput="filtrarTabelaTutorados()" style="width:220px;">
+              placeholder="Buscar por nome..." oninput="filtrarTabelaTutoradosAdmin()" style="width:220px;">
           </div>
         </div>
 
