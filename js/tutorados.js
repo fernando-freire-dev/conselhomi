@@ -488,7 +488,7 @@ async function gerarPDF() {
   for (const [turmaId, grupo] of turmasOrdenadas) {
     const nomeTurma = `${grupo.turma.nome} - ${grupo.turma.ano}`;
     linhasPDF.push([
-      { content: nomeTurma, colSpan: 5, styles: { fillColor: [30, 60, 114], textColor: 255, fontStyle: "bold", fontSize: 9 } }
+      { content: nomeTurma, colSpan: 5, styles: { fillColor: [30, 60, 114], textColor: 255, fontStyle: "bold", fontSize: 9 }, pageBreak: "avoid" }
     ]);
 
     const alunosOrdenados = [...grupo.alunos].sort((a, b) =>
@@ -553,14 +553,16 @@ async function gerarPDF() {
     startY: 28,
     theme: "grid",
     margin: { left: marginL, right: marginR },
+    rowPageBreak: "avoid",
+    showHead: "everyPage",
     styles:     { fontSize: 9, cellPadding: 2, valign: "middle", overflow: "linebreak" },
     headStyles: { fontSize: 9, fillColor: [30, 60, 114], textColor: 255, fontStyle: "bold" },
     columnStyles: {
       0: { cellWidth: 12, halign: "center" },
       1: { cellWidth: 80 },
       2: { cellWidth: 95 },
-      3: { cellWidth: 28 },
-      4: { cellWidth: 60 }
+      3: { cellWidth: 30 },
+      4: { cellWidth: 65 }
     },
     alternateRowStyles: { fillColor: [245, 247, 250] },
     didParseCell: function(data) {
