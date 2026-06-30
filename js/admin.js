@@ -1263,6 +1263,7 @@ function renderTabelaTutoradosAdmin(lista) {
   if (!corpo) return;
 
   const termo = (document.getElementById("buscaTutoradoAdmin")?.value || "").toLowerCase().trim();
+  const ordenacao = document.getElementById("ordenacaoTutoradosAdmin")?.value || "chamada";
 
   let filtrada = lista;
   if (termo) {
@@ -1278,12 +1279,31 @@ function renderTabelaTutoradosAdmin(lista) {
     return;
   }
 
-  // Ordena por número de chamada depois por nome
   const ordenados = [...filtrada].sort((a, b) => {
+    const nomeA = a.alunos?.nome || "";
+    const nomeB = b.alunos?.nome || "";
+
+    if (ordenacao === "nome") {
+      return nomeA.localeCompare(nomeB, "pt-BR");
+    }
+
+    if (ordenacao === "turma") {
+      const turmaA = a.alunos?.turmas ? `${a.alunos.turmas.nome} - ${a.alunos.turmas.ano}` : "";
+      const turmaB = b.alunos?.turmas ? `${b.alunos.turmas.nome} - ${b.alunos.turmas.ano}` : "";
+      const compTurma = turmaA.localeCompare(turmaB, "pt-BR");
+      if (compTurma !== 0) return compTurma;
+      // dentro da mesma turma, ordena por número de chamada
+      const nA = a.alunos?.numero_chamada ?? 9999;
+      const nB = b.alunos?.numero_chamada ?? 9999;
+      if (nA !== nB) return nA - nB;
+      return nomeA.localeCompare(nomeB, "pt-BR");
+    }
+
+    // padrão: número de chamada
     const nA = a.alunos?.numero_chamada ?? 9999;
     const nB = b.alunos?.numero_chamada ?? 9999;
     if (nA !== nB) return nA - nB;
-    return (a.alunos?.nome || "").localeCompare(b.alunos?.nome || "", "pt-BR");
+    return nomeA.localeCompare(nomeB, "pt-BR");
   });
 
   const situacaoBadge = (sit) => sit === "transferido"
@@ -1309,7 +1329,7 @@ function renderTabelaTutoradosAdmin(lista) {
   if (msg) msg.textContent = `Exibindo ${filtrada.length} de ${lista.length} tutorado(s).`;
 }
 
-// Filtra a tabela ao digitar na busca
+// Filtra/reordena a tabela ao digitar na busca ou trocar a ordenação
 function filtrarTabelaTutoradosAdmin() {
   renderTabelaTutoradosAdmin(tutoradosAdminCache);
 }
