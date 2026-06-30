@@ -557,10 +557,10 @@ async function gerarPDF() {
     headStyles: { fontSize: 9, fillColor: [30, 60, 114], textColor: 255, fontStyle: "bold" },
     columnStyles: {
       0: { cellWidth: 12, halign: "center" },
-      1: { cellWidth: 85 },
-      2: { cellWidth: 100 },
-      3: { cellWidth: 30 },
-      4: { cellWidth: 65 }
+      1: { cellWidth: 80 },
+      2: { cellWidth: 95 },
+      3: { cellWidth: 28 },
+      4: { cellWidth: 60 }
     },
     alternateRowStyles: { fillColor: [245, 247, 250] },
     didParseCell: function(data) {
