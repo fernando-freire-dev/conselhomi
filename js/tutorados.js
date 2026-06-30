@@ -560,7 +560,7 @@ async function gerarPDF() {
     columnStyles: {
       0: { cellWidth: 12, halign: "center" },
       1: { cellWidth: 80 },
-      2: { cellWidth: 95 },
+      2: { cellWidth: 100 },
       3: { cellWidth: 30 },
       4: { cellWidth: 65 }
     },
