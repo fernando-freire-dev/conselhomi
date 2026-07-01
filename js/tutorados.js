@@ -561,7 +561,7 @@ async function gerarPDF() {
       valign: "middle",
       overflow: "linebreak",
       lineColor: [0, 0, 0],
-      lineWidth: 0.3
+      lineWidth: 0.2
     },
     headStyles: {
       fontSize: 9,
@@ -569,7 +569,7 @@ async function gerarPDF() {
       textColor: 255,
       fontStyle: "bold",
       lineColor: [0, 0, 0],
-      lineWidth: 0.3
+      lineWidth: 0.2
     },
     columnStyles: {
       0: { cellWidth: 12, halign: "center" },
