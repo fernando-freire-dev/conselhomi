@@ -596,7 +596,7 @@ function fecharModal() {
 
 //Mostrar as seções da página admin
 function mostrarSecao(secao) {
-  const secoes = ["perfil", "turma", "vinculo", "vinculo-academico", "disciplinas", "tutoria", "tutoria-lote"];
+  const secoes = ["perfil", "turma", "vinculo", "vinculo-academico", "disciplinas", "tutoria"];
 
   secoes.forEach(s => {
     const div = document.getElementById("secao-" + s);
@@ -607,7 +607,6 @@ function mostrarSecao(secao) {
 
   if (secao === "disciplinas") loadDisciplinasAdmin();
   if (secao === "tutoria") inicializarSecaoTutoria();
-  if (secao === "tutoria-lote") inicializarSecaoTutoriaLote();
 }
 
 // ── Gerenciamento de Apelidos de Disciplinas ──────────────────
