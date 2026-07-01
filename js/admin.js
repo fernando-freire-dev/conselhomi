@@ -596,7 +596,7 @@ function fecharModal() {
 
 //Mostrar as seções da página admin
 function mostrarSecao(secao) {
-  const secoes = ["perfil", "turma", "vinculo", "vinculo-academico", "disciplinas", "tutoria"];
+  const secoes = ["perfil", "turma", "vinculo", "vinculo-academico", "disciplinas", "tutoria", "tutoria-lote"];
 
   secoes.forEach(s => {
     const div = document.getElementById("secao-" + s);
@@ -605,9 +605,9 @@ function mostrarSecao(secao) {
     }
   });
 
-  // Carrega dados ao entrar em cada seção
   if (secao === "disciplinas") loadDisciplinasAdmin();
   if (secao === "tutoria") inicializarSecaoTutoria();
+  if (secao === "tutoria-lote") inicializarSecaoTutoriaLote();
 }
 
 // ── Gerenciamento de Apelidos de Disciplinas ──────────────────
@@ -1531,6 +1531,286 @@ async function vincularTutorado(alunoId, nomeAluno, trocarTutor) {
   setTimeout(() => {
     if (feedback) feedback.innerHTML = "";
   }, 2500);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TUTORIA EM LOTE — vincular vários alunos de uma turma de uma vez
+// ═══════════════════════════════════════════════════════════════
+
+let alunosLoteCache = [];          // alunos da turma selecionada
+let tutoriasLoteCache = {};        // aluno_id → nome do tutor atual
+let secaoLoteInicializada = false;
+
+async function inicializarSecaoTutoriaLote() {
+  if (secaoLoteInicializada) return;
+  secaoLoteInicializada = true;
+  await carregarSelectTutorLote();
+  await carregarSelectTurmaLote();
+}
+
+async function carregarSelectTutorLote() {
+  const select = document.getElementById("selectTutorLote");
+  if (!select) return;
+
+  const { data, error } = await supabaseClient
+    .from("profiles")
+    .select("id, nome")
+    .eq("role", "professor")
+    .order("nome", { ascending: true });
+
+  if (error) { console.error(error); return; }
+
+  select.innerHTML = `<option value="">Selecione um professor...</option>`;
+  (data || []).forEach(p => {
+    select.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
+  });
+}
+
+async function carregarSelectTurmaLote() {
+  const select = document.getElementById("selectTurmaLote");
+  if (!select) return;
+
+  const { data, error } = await supabaseClient
+    .from("turmas")
+    .select("id, nome, ano, ensino")
+    .order("nome", { ascending: true });
+
+  if (error) { console.error(error); return; }
+
+  select.innerHTML = `<option value="">Selecione uma turma...</option>`;
+  (data || []).forEach(t => {
+    select.innerHTML += `<option value="${t.id}">${t.nome} - ${t.ano}</option>`;
+  });
+}
+
+// Habilita o select de turma ao selecionar professor
+function onTutorLoteChange() {
+  const tutorId = document.getElementById("selectTutorLote")?.value;
+  const selectTurma = document.getElementById("selectTurmaLote");
+  const areaAlunos = document.getElementById("areaAlunosLote");
+
+  if (selectTurma) selectTurma.disabled = !tutorId;
+
+  // Limpa a lista se trocar de professor
+  alunosLoteCache = [];
+  if (areaAlunos) areaAlunos.style.display = "none";
+  const contador = document.getElementById("contadorLote");
+  if (contador) contador.textContent = "";
+}
+
+// Carrega alunos da turma e tutorias existentes
+async function carregarAlunosLote() {
+  const turmaId = document.getElementById("selectTurmaLote")?.value;
+  const areaAlunos = document.getElementById("areaAlunosLote");
+  const msgAlunos = document.getElementById("msgAlunosLote");
+  const contador = document.getElementById("contadorLote");
+
+  if (!turmaId) {
+    if (areaAlunos) areaAlunos.style.display = "none";
+    return;
+  }
+
+  if (msgAlunos) msgAlunos.textContent = "Carregando alunos...";
+
+  // Busca alunos ativos da turma
+  const { data: alunos, error: errAlunos } = await supabaseClient
+    .from("alunos")
+    .select("id, nome, numero_chamada")
+    .eq("turma_id", turmaId)
+    .eq("situacao", "ativo")
+    .order("numero_chamada", { ascending: true, nullsFirst: false })
+    .order("nome", { ascending: true });
+
+  if (errAlunos) {
+    if (msgAlunos) msgAlunos.textContent = "Erro ao carregar alunos.";
+    console.error(errAlunos);
+    return;
+  }
+
+  alunosLoteCache = alunos || [];
+
+  // Busca tutorias existentes para saber quem já tem tutor
+  const { data: tutorias, error: errTutorias } = await supabaseClient
+    .from("tutorias")
+    .select(`aluno_id, profiles ( nome )`)
+    .in("aluno_id", alunosLoteCache.map(a => a.id));
+
+  if (errTutorias) console.error(errTutorias);
+
+  tutoriasLoteCache = {};
+  (tutorias || []).forEach(t => {
+    tutoriasLoteCache[t.aluno_id] = t.profiles?.nome || "Outro professor";
+  });
+
+  if (msgAlunos) msgAlunos.textContent = "";
+
+  const semTutor = alunosLoteCache.filter(a => !tutoriasLoteCache[a.id]).length;
+  const comTutor = alunosLoteCache.length - semTutor;
+  if (contador) contador.textContent = `${alunosLoteCache.length} alunos — ${semTutor} sem tutor, ${comTutor} com tutor`;
+
+  if (areaAlunos) areaAlunos.style.display = "block";
+
+  // Desmarca "selecionar todos"
+  const chkTodos = document.getElementById("chkSelecionarTodosLote");
+  if (chkTodos) chkTodos.checked = false;
+
+  renderAlunosLote();
+}
+
+function renderAlunosLote() {
+  const corpo = document.getElementById("corpoAlunosLote");
+  if (!corpo) return;
+
+  const exibirComTutor  = document.getElementById("chkExibirComTutor")?.checked ?? true;
+  const exibirSemTutor  = document.getElementById("chkExibirSemTutor")?.checked ?? true;
+  const tutorSelecionadoNome = document.getElementById("selectTutorLote")
+    ?.options[document.getElementById("selectTutorLote")?.selectedIndex]?.text || "";
+
+  const lista = alunosLoteCache.filter(a => {
+    const temTutor = !!tutoriasLoteCache[a.id];
+    if (temTutor && !exibirComTutor) return false;
+    if (!temTutor && !exibirSemTutor) return false;
+    return true;
+  });
+
+  if (lista.length === 0) {
+    corpo.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-3">Nenhum aluno para exibir com os filtros atuais.</td></tr>`;
+    return;
+  }
+
+  corpo.innerHTML = lista.map(aluno => {
+    const tutorAtual = tutoriasLoteCache[aluno.id] || null;
+    const jaEhDesteProfessor = tutorAtual === tutorSelecionadoNome;
+
+    let tutorCell = `<span class="text-muted small">—</span>`;
+    if (jaEhDesteProfessor) {
+      tutorCell = `<span class="badge bg-success">Este professor</span>`;
+    } else if (tutorAtual) {
+      tutorCell = `<span class="badge bg-warning text-dark">${tutorAtual}</span>`;
+    }
+
+    // Checkbox desabilitado se já for deste professor
+    const disabled = jaEhDesteProfessor ? "disabled" : "";
+    const checked  = jaEhDesteProfessor ? "checked" : "";
+
+    return `
+      <tr class="${tutorAtual && !jaEhDesteProfessor ? "table-warning" : ""}">
+        <td class="text-center">
+          <input class="form-check-input chk-aluno-lote" type="checkbox"
+            value="${aluno.id}" ${checked} ${disabled}
+            onchange="atualizarChkTodosLote()">
+        </td>
+        <td class="text-center">${aluno.numero_chamada ?? "—"}</td>
+        <td class="fw-semibold">${aluno.nome}</td>
+        <td>${tutorCell}</td>
+      </tr>
+    `;
+  }).join("");
+}
+
+// Atualiza o estado do "Selecionar todos" conforme checkboxes individuais
+function atualizarChkTodosLote() {
+  const checkboxes = document.querySelectorAll(".chk-aluno-lote:not(:disabled)");
+  const todos = Array.from(checkboxes).every(c => c.checked);
+  const chkTodos = document.getElementById("chkSelecionarTodosLote");
+  if (chkTodos) chkTodos.checked = todos;
+}
+
+function toggleSelecionarTodosLote(chk) {
+  document.querySelectorAll(".chk-aluno-lote:not(:disabled)").forEach(c => {
+    c.checked = chk.checked;
+  });
+}
+
+async function vincularLote() {
+  const tutorId = document.getElementById("selectTutorLote")?.value;
+  const tutorNome = document.getElementById("selectTutorLote")
+    ?.options[document.getElementById("selectTutorLote")?.selectedIndex]?.text || "";
+
+  if (!tutorId) { alert("Selecione um professor tutor."); return; }
+
+  const selecionados = Array.from(
+    document.querySelectorAll(".chk-aluno-lote:checked:not(:disabled)")
+  ).map(c => c.value);
+
+  if (selecionados.length === 0) {
+    alert("Selecione ao menos um aluno para vincular.");
+    return;
+  }
+
+  // Separa os que já têm outro tutor (precisam de remoção prévia)
+  const comOutroTutor = selecionados.filter(id =>
+    tutoriasLoteCache[id] && tutoriasLoteCache[id] !== tutorNome
+  );
+  const semTutor = selecionados.filter(id => !tutoriasLoteCache[id]);
+
+  let confirmMsg = `Vincular ${selecionados.length} aluno(s) ao professor "${tutorNome}"?`;
+  if (comOutroTutor.length > 0) {
+    confirmMsg += `\n\n⚠️ ${comOutroTutor.length} aluno(s) já possuem outro tutor e serão transferidos.`;
+  }
+
+  if (!confirm(confirmMsg)) return;
+
+  // UI: loading
+  const btn = document.getElementById("btnVincularLote");
+  const btnTexto = document.getElementById("btnVincularLoteTexto");
+  const spinner = document.getElementById("btnVincularLoteSpinner");
+  const feedback = document.getElementById("feedbackLote");
+
+  btn.disabled = true;
+  btnTexto.textContent = "Vinculando...";
+  spinner.classList.remove("d-none");
+  feedback.innerHTML = "";
+
+  try {
+    // 1. Remove tutorias anteriores dos que têm outro tutor
+    if (comOutroTutor.length > 0) {
+      const { error: errDel } = await supabaseClient
+        .from("tutorias")
+        .delete()
+        .in("aluno_id", comOutroTutor);
+
+      if (errDel) throw new Error("Erro ao remover tutorias anteriores: " + errDel.message);
+    }
+
+    // 2. Insere os novos vínculos (semTutor + comOutroTutor que foram removidos)
+    const payload = selecionados.map(alunoId => ({
+      professor_id: tutorId,
+      aluno_id: alunoId
+    }));
+
+    const { error: errIns } = await supabaseClient
+      .from("tutorias")
+      .insert(payload);
+
+    if (errIns) throw new Error("Erro ao vincular: " + errIns.message);
+
+    feedback.innerHTML = `<span class="text-success fw-semibold">✅ ${selecionados.length} aluno(s) vinculados com sucesso!</span>`;
+
+    // Atualiza cache local e re-renderiza sem nova consulta ao banco
+    selecionados.forEach(id => { tutoriasLoteCache[id] = tutorNome; });
+
+    const chkTodos = document.getElementById("chkSelecionarTodosLote");
+    if (chkTodos) chkTodos.checked = false;
+
+    // Atualiza contador
+    const semTutorAtual = alunosLoteCache.filter(a => !tutoriasLoteCache[a.id]).length;
+    const comTutorAtual = alunosLoteCache.length - semTutorAtual;
+    const contador = document.getElementById("contadorLote");
+    if (contador) contador.textContent = `${alunosLoteCache.length} alunos — ${semTutorAtual} sem tutor, ${comTutorAtual} com tutor`;
+
+    renderAlunosLote();
+
+    setTimeout(() => { feedback.innerHTML = ""; }, 3000);
+
+  } catch (err) {
+    feedback.innerHTML = `<span class="text-danger">${err.message}</span>`;
+    console.error(err);
+  } finally {
+    btn.disabled = false;
+    btnTexto.textContent = "✅ Vincular Selecionados";
+    spinner.classList.add("d-none");
+  }
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
