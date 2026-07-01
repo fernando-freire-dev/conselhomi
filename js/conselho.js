@@ -977,9 +977,9 @@ async function finalizarConselho() {
   const turmaId = conselhoAtual.turma_id;
   const bimestre = conselhoAtual.bimestre;
 
-  const { data: alunos, error: errAlunos } = await supabaseClient
+  const { data: todosAlunosFinalizar, error: errAlunos } = await supabaseClient
     .from("alunos")
-    .select("id,nome")
+    .select("id, nome, situacao")
     .eq("turma_id", turmaId)
     .order("numero_chamada", { ascending: true, nullsFirst: false })
     .order("nome", { ascending: true });
@@ -989,6 +989,19 @@ async function finalizarConselho() {
     alert("Erro ao buscar alunos da turma.");
     return;
   }
+
+  // Mesma lógica de montarTabelaAlunos: ativos sempre entram;
+  // transferidos só entram se já tiverem registro neste conselho.
+  const { data: registrosExistentesF } = await supabaseClient
+    .from("conselho_alunos")
+    .select("aluno_id")
+    .eq("conselho_id", conselhoAtual.id);
+
+  const alunosComRegistroF = new Set((registrosExistentesF || []).map(r => r.aluno_id));
+
+  const alunos = (todosAlunosFinalizar || []).filter(a =>
+    a.situacao === "ativo" || alunosComRegistroF.has(a.id)
+  );
 
   const { data: disciplinas, error: errDisciplinas } = await supabaseClient
     .from("turma_disciplinas")
