@@ -555,8 +555,22 @@ async function gerarPDF() {
     margin: { left: marginL, right: marginR },
     rowPageBreak: "avoid",
     showHead: "everyPage",
-    styles:     { fontSize: 9, cellPadding: 2, valign: "middle", overflow: "linebreak" },
-    headStyles: { fontSize: 9, fillColor: [30, 60, 114], textColor: 255, fontStyle: "bold" },
+    styles: {
+      fontSize: 9,
+      cellPadding: 2,
+      valign: "middle",
+      overflow: "linebreak",
+      lineColor: [0, 0, 0],
+      lineWidth: 0.3
+    },
+    headStyles: {
+      fontSize: 9,
+      fillColor: [30, 60, 114],
+      textColor: 255,
+      fontStyle: "bold",
+      lineColor: [0, 0, 0],
+      lineWidth: 0.3
+    },
     columnStyles: {
       0: { cellWidth: 12, halign: "center" },
       1: { cellWidth: 80 },
@@ -567,8 +581,8 @@ async function gerarPDF() {
     alternateRowStyles: { fillColor: [245, 247, 250] },
     didParseCell: function(data) {
       if (data.cell.raw === "Sem apontamentos" || data.cell.raw === "Sem dados do conselho") {
-        data.cell.styles.textColor  = [150, 150, 150];
-        data.cell.styles.fontStyle  = "italic";
+        data.cell.styles.textColor = [150, 150, 150];
+        data.cell.styles.fontStyle = "italic";
       }
     }
   });
