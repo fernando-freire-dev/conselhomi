@@ -59,7 +59,6 @@
       <button class="btn btn-success" onclick="mostrarSecao('vinculo-academico')">Vínculo Acadêmico</button>
       <button class="btn btn-secondary" onclick="mostrarSecao('disciplinas')">Disciplinas</button>
       <button class="btn btn-tutoria-outline" onclick="mostrarSecao('tutoria')" style="background:linear-gradient(135deg,#6f42c1,#5a32a3);color:white;border:none;">👨‍🏫 Tutoria</button>
-      <button class="btn btn-tutoria-outline" onclick="mostrarSecao('tutoria-lote')" style="background:linear-gradient(135deg,#5a32a3,#3d1f7a);color:white;border:none;">📋 Tutoria em Lote</button>
     </div>
 
     <!-- ── Seção: Usuários ── -->
@@ -230,152 +229,174 @@
     <!-- ── Seção: Tutoria ─────────────────────────────────────── -->
     <div id="secao-tutoria" style="display:none;">
 
-      <!-- Seletor de professor tutor -->
-      <div class="card p-4 mb-4">
-        <h4 class="mb-3">Gerenciar Tutorados</h4>
-        <p class="text-muted small mb-3">
-          Selecione um professor para visualizar e gerenciar seus alunos tutorados.
-          Cada aluno pode ter apenas um professor tutor.
-        </p>
+      <!-- Abas internas da seção Tutoria -->
+      <ul class="nav nav-tabs mb-4" id="tabsTutoria">
+        <li class="nav-item">
+          <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabTutoriaIndividual" type="button">
+            👤 Gerenciar Individual
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabTutoriaLote" type="button"
+            onclick="inicializarSecaoTutoriaLote()">
+            📋 Vincular em Lote
+          </button>
+        </li>
+      </ul>
 
-        <div class="row g-3 align-items-end">
-          <div class="col-md-6">
-            <label class="form-label fw-semibold">Professor Tutor</label>
-            <select id="selectTutorAdmin" class="form-select" onchange="carregarTutoradosAdmin()">
-              <option value="">Selecione um professor...</option>
-            </select>
-          </div>
-          <div class="col-md-3">
-            <button class="btn btn-success w-100" onclick="abrirModalAdicionarTutorado()"
-              id="btnAdicionarTutorado" disabled>
-              + Adicionar Tutorado
-            </button>
-          </div>
-          <div class="col-md-3">
-            <div id="contadorTutoradosAdmin" class="text-muted small pt-1"></div>
-          </div>
-        </div>
-      </div>
+      <div class="tab-content">
 
-      <!-- Tabela de tutorados do professor selecionado -->
-      <div class="card p-4 mb-4" id="cardTabelaTutorados" style="display:none;">
-        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-          <h5 class="mb-0" id="tituloTabelaTutorados">Tutorados</h5>
-          <div class="d-flex gap-2 align-items-center">
-            <label class="small text-muted mb-0">Ordenar por:</label>
-            <select id="ordenacaoTutoradosAdmin" class="form-select form-select-sm" style="width:160px;" onchange="filtrarTabelaTutoradosAdmin()">
-              <option value="chamada">Nº de Chamada</option>
-              <option value="nome">Nome</option>
-              <option value="turma">Turma</option>
-            </select>
-            <input type="text" id="buscaTutoradoAdmin" class="form-control form-control-sm"
-              placeholder="Buscar por nome..." oninput="filtrarTabelaTutoradosAdmin()" style="width:220px;">
+        <!-- ── Aba: Gerenciar Individual ── -->
+        <div class="tab-pane fade show active" id="tabTutoriaIndividual">
+
+          <!-- Seletor de professor tutor -->
+          <div class="card p-4 mb-4">
+            <h4 class="mb-3">Gerenciar Tutorados</h4>
+            <p class="text-muted small mb-3">
+              Selecione um professor para visualizar e gerenciar seus alunos tutorados.
+              Cada aluno pode ter apenas um professor tutor.
+            </p>
+
+            <div class="row g-3 align-items-end">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Professor Tutor</label>
+                <select id="selectTutorAdmin" class="form-select" onchange="carregarTutoradosAdmin()">
+                  <option value="">Selecione um professor...</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <button class="btn btn-success w-100" onclick="abrirModalAdicionarTutorado()"
+                  id="btnAdicionarTutorado" disabled>
+                  + Adicionar Tutorado
+                </button>
+              </div>
+              <div class="col-md-3">
+                <div id="contadorTutoradosAdmin" class="text-muted small pt-1"></div>
+              </div>
+            </div>
           </div>
-        </div>
 
-        <div class="table-responsive">
-          <table class="table table-bordered align-middle">
-            <thead class="table-light">
-              <tr>
-                <th style="width:50px" class="text-center">Nº</th>
-                <th>Aluno</th>
-                <th style="width:180px">Turma</th>
-                <th style="width:100px" class="text-center">Ação</th>
-              </tr>
-            </thead>
-            <tbody id="corpoTabelaTutorados"></tbody>
-          </table>
-        </div>
+          <!-- Tabela de tutorados do professor selecionado -->
+          <div class="card p-4 mb-4" id="cardTabelaTutorados" style="display:none;">
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+              <h5 class="mb-0" id="tituloTabelaTutorados">Tutorados</h5>
+              <div class="d-flex gap-2 align-items-center">
+                <label class="small text-muted mb-0">Ordenar por:</label>
+                <select id="ordenacaoTutoradosAdmin" class="form-select form-select-sm" style="width:160px;" onchange="filtrarTabelaTutoradosAdmin()">
+                  <option value="chamada">Nº de Chamada</option>
+                  <option value="nome">Nome</option>
+                  <option value="turma">Turma</option>
+                </select>
+                <input type="text" id="buscaTutoradoAdmin" class="form-control form-control-sm"
+                  placeholder="Buscar por nome..." oninput="filtrarTabelaTutoradosAdmin()" style="width:220px;">
+              </div>
+            </div>
 
-        <div id="msgTabelaTutorados" class="text-muted small mt-2"></div>
-      </div>
+            <div class="table-responsive">
+              <table class="table table-bordered align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th style="width:50px" class="text-center">Nº</th>
+                    <th>Aluno</th>
+                    <th style="width:180px">Turma</th>
+                    <th style="width:100px" class="text-center">Ação</th>
+                  </tr>
+                </thead>
+                <tbody id="corpoTabelaTutorados"></tbody>
+              </table>
+            </div>
+
+            <div id="msgTabelaTutorados" class="text-muted small mt-2"></div>
+          </div>
+
+        </div><!-- /tabTutoriaIndividual -->
+
+        <!-- ── Aba: Vincular em Lote ── -->
+        <div class="tab-pane fade" id="tabTutoriaLote">
+
+          <div class="card p-4 mb-4">
+            <h4 class="mb-3">Vincular Tutorados em Lote</h4>
+            <p class="text-muted small mb-3">
+              Selecione o professor tutor e a turma. Marque os alunos que deseja vincular e clique em
+              "Vincular Selecionados". Alunos que já possuem tutor são destacados — você pode optar por
+              transferi-los ou mantê-los com o tutor atual.
+            </p>
+
+            <div class="row g-3 align-items-end mb-4">
+              <div class="col-md-5">
+                <label class="form-label fw-semibold">Professor Tutor</label>
+                <select id="selectTutorLote" class="form-select" onchange="onTutorLoteChange()">
+                  <option value="">Selecione um professor...</option>
+                </select>
+              </div>
+              <div class="col-md-5">
+                <label class="form-label fw-semibold">Turma</label>
+                <select id="selectTurmaLote" class="form-select" onchange="carregarAlunosLote()" disabled>
+                  <option value="">Selecione uma turma...</option>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <div id="contadorLote" class="text-muted small"></div>
+              </div>
+            </div>
+
+            <!-- Lista de alunos com checkboxes -->
+            <div id="areaAlunosLote" style="display:none;">
+
+              <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="chkSelecionarTodosLote"
+                    onchange="toggleSelecionarTodosLote(this)">
+                  <label class="form-check-label fw-semibold" for="chkSelecionarTodosLote">
+                    Selecionar todos
+                  </label>
+                </div>
+                <div class="d-flex gap-2">
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" id="chkExibirComTutor" checked
+                      onchange="renderAlunosLote()">
+                    <label class="form-check-label small" for="chkExibirComTutor">Exibir com tutor</label>
+                  </div>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" id="chkExibirSemTutor" checked
+                      onchange="renderAlunosLote()">
+                    <label class="form-check-label small" for="chkExibirSemTutor">Exibir sem tutor</label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="table-responsive mb-3" style="max-height:420px; overflow-y:auto;">
+                <table class="table table-bordered table-hover align-middle table-sm">
+                  <thead class="table-light sticky-top">
+                    <tr>
+                      <th style="width:44px" class="text-center"><span title="Selecionar">☑</span></th>
+                      <th style="width:50px" class="text-center">Nº</th>
+                      <th>Aluno</th>
+                      <th style="width:180px">Tutor Atual</th>
+                    </tr>
+                  </thead>
+                  <tbody id="corpoAlunosLote"></tbody>
+                </table>
+              </div>
+
+              <div class="d-flex gap-3 align-items-center flex-wrap">
+                <button class="btn btn-success" id="btnVincularLote" onclick="vincularLote()">
+                  <span id="btnVincularLoteTexto">✅ Vincular Selecionados</span>
+                  <span id="btnVincularLoteSpinner" class="spinner-border spinner-border-sm ms-2 d-none"></span>
+                </button>
+                <div id="feedbackLote" class="small"></div>
+              </div>
+
+            </div><!-- /areaAlunosLote -->
+
+            <div id="msgAlunosLote" class="text-muted small mt-2"></div>
+          </div>
+
+        </div><!-- /tabTutoriaLote -->
+
+      </div><!-- /tab-content -->
 
     </div><!-- /secao-tutoria -->
-
-    <!-- ── Seção: Tutoria em Lote ──────────────────────────── -->
-    <div id="secao-tutoria-lote" style="display:none;">
-
-      <div class="card p-4 mb-4">
-        <h4 class="mb-3">Vincular Tutorados em Lote</h4>
-        <p class="text-muted small mb-3">
-          Selecione o professor tutor e a turma. Marque os alunos que deseja vincular e clique em
-          "Vincular Selecionados". Alunos que já possuem tutor são destacados — você pode optar por
-          transferi-los ou mantê-los com o tutor atual.
-        </p>
-
-        <div class="row g-3 align-items-end mb-4">
-          <div class="col-md-5">
-            <label class="form-label fw-semibold">Professor Tutor</label>
-            <select id="selectTutorLote" class="form-select" onchange="onTutorLoteChange()">
-              <option value="">Selecione um professor...</option>
-            </select>
-          </div>
-          <div class="col-md-5">
-            <label class="form-label fw-semibold">Turma</label>
-            <select id="selectTurmaLote" class="form-select" onchange="carregarAlunosLote()" disabled>
-              <option value="">Selecione uma turma...</option>
-            </select>
-          </div>
-          <div class="col-md-2">
-            <div id="contadorLote" class="text-muted small"></div>
-          </div>
-        </div>
-
-        <!-- Lista de alunos com checkboxes -->
-        <div id="areaAlunosLote" style="display:none;">
-
-          <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" id="chkSelecionarTodosLote"
-                onchange="toggleSelecionarTodosLote(this)">
-              <label class="form-check-label fw-semibold" for="chkSelecionarTodosLote">
-                Selecionar todos
-              </label>
-            </div>
-            <div class="d-flex gap-2">
-              <div class="form-check form-check-inline">
-                <input class="form-check-input" type="checkbox" id="chkExibirComTutor" checked
-                  onchange="renderAlunosLote()">
-                <label class="form-check-label small" for="chkExibirComTutor">Exibir com tutor</label>
-              </div>
-              <div class="form-check form-check-inline">
-                <input class="form-check-input" type="checkbox" id="chkExibirSemTutor" checked
-                  onchange="renderAlunosLote()">
-                <label class="form-check-label small" for="chkExibirSemTutor">Exibir sem tutor</label>
-              </div>
-            </div>
-          </div>
-
-          <div class="table-responsive mb-3" style="max-height:420px; overflow-y:auto;">
-            <table class="table table-bordered table-hover align-middle table-sm">
-              <thead class="table-light sticky-top">
-                <tr>
-                  <th style="width:44px" class="text-center">
-                    <span title="Selecionar">☑</span>
-                  </th>
-                  <th style="width:50px" class="text-center">Nº</th>
-                  <th>Aluno</th>
-                  <th style="width:180px">Tutor Atual</th>
-                </tr>
-              </thead>
-              <tbody id="corpoAlunosLote"></tbody>
-            </table>
-          </div>
-
-          <div class="d-flex gap-3 align-items-center flex-wrap">
-            <button class="btn btn-success" id="btnVincularLote" onclick="vincularLote()">
-              <span id="btnVincularLoteTexto">✅ Vincular Selecionados</span>
-              <span id="btnVincularLoteSpinner" class="spinner-border spinner-border-sm ms-2 d-none"></span>
-            </button>
-            <div id="feedbackLote" class="small"></div>
-          </div>
-
-        </div><!-- /areaAlunosLote -->
-
-        <div id="msgAlunosLote" class="text-muted small mt-2"></div>
-      </div>
-
-    </div><!-- /secao-tutoria-lote -->
 
   </div>
 </main>
