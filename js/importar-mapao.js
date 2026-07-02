@@ -450,8 +450,8 @@ async function salvarTudo() {
     if (!periodoAberto) return;
     //Fim da alteração
 
-    // Envia em lotes sequenciais de 20 para evitar timeout com RLS do professor
-    const TAMANHO_LOTE = 20;
+    // Envia em lotes sequenciais de 120 para evitar timeout com RLS do professor
+    const TAMANHO_LOTE = 120;
     for (let i = 0; i < registros.length; i += TAMANHO_LOTE) {
       const lote = registros.slice(i, i + TAMANHO_LOTE);
       const { error: errLote } = await supabaseClient
