@@ -14,7 +14,6 @@ let mapaDiscsGlobal    = {};
 
 document.addEventListener("DOMContentLoaded", async () => {
   await verificarUsuario();
-  await carregarBimestreAtivo("bimestreSelect");
   document.getElementById("inputMapao")
     .addEventListener("change", processarArquivo);
 });
@@ -282,12 +281,11 @@ async function processarArquivo(event) {
       return;
     }
 
-    // 5. Buscar alunos da turma no banco (apenas ativos)
+    // 5. Buscar alunos da turma no banco
     const { data: alunos } = await supabaseClient
       .from("alunos")
       .select("id, nome, numero_chamada")
       .eq("turma_id", turmaId)
-      .eq("situacao", "ativo")
       .order("numero_chamada", { ascending: true, nullsFirst: false })
       .order("nome", { ascending: true });
 
@@ -451,14 +449,19 @@ async function salvarTudo() {
     if (!periodoAberto) return;
     //Fim da alteração
 
-    const { error } = await supabaseClient
-      .from("notas_frequencia")
-      .upsert(registros, { onConflict: ["aluno_id", "disciplina_id", "bimestre"] });
+    // Envia em lotes de 50 para evitar timeout de statement no Supabase
+    const TAMANHO_LOTE = 50;
+    for (let i = 0; i < registros.length; i += TAMANHO_LOTE) {
+      const lote = registros.slice(i, i + TAMANHO_LOTE);
+      const { error } = await supabaseClient
+        .from("notas_frequencia")
+        .upsert(lote, { onConflict: ["aluno_id", "disciplina_id", "bimestre"] });
 
-    if (error) {
-      alert("Erro ao salvar: " + error.message);
-      console.error(error);
-      return;
+      if (error) {
+        alert("Erro ao salvar: " + error.message);
+        console.error(error);
+        return;
+      }
     }
 
     alert(`✅ ${registros.length} registros salvos com sucesso!`);
