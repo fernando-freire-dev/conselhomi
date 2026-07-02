@@ -281,11 +281,12 @@ async function processarArquivo(event) {
       return;
     }
 
-    // 5. Buscar alunos da turma no banco
+    // 5. Buscar alunos ativos da turma no banco (transferidos são excluídos)
     const { data: alunos } = await supabaseClient
       .from("alunos")
       .select("id, nome, numero_chamada")
       .eq("turma_id", turmaId)
+      .eq("situacao", "ativo")
       .order("numero_chamada", { ascending: true, nullsFirst: false })
       .order("nome", { ascending: true });
 
@@ -453,13 +454,13 @@ async function salvarTudo() {
     const TAMANHO_LOTE = 50;
     for (let i = 0; i < registros.length; i += TAMANHO_LOTE) {
       const lote = registros.slice(i, i + TAMANHO_LOTE);
-      const { error } = await supabaseClient
+      const { error: errLote } = await supabaseClient
         .from("notas_frequencia")
         .upsert(lote, { onConflict: ["aluno_id", "disciplina_id", "bimestre"] });
 
-      if (error) {
-        alert("Erro ao salvar: " + error.message);
-        console.error(error);
+      if (errLote) {
+        alert("Erro ao salvar: " + errLote.message);
+        console.error(errLote);
         return;
       }
     }
