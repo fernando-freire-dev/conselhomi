@@ -450,26 +450,19 @@ async function salvarTudo() {
     if (!periodoAberto) return;
     //Fim da alteração
 
-    // Divide em lotes de 50 e envia todos em paralelo
-    const TAMANHO_LOTE = 50;
-    const lotes = [];
+    // Envia em lotes sequenciais de 20 para evitar timeout com RLS do professor
+    const TAMANHO_LOTE = 20;
     for (let i = 0; i < registros.length; i += TAMANHO_LOTE) {
-      lotes.push(registros.slice(i, i + TAMANHO_LOTE));
-    }
+      const lote = registros.slice(i, i + TAMANHO_LOTE);
+      const { error: errLote } = await supabaseClient
+        .from("notas_frequencia")
+        .upsert(lote, { onConflict: ["aluno_id", "disciplina_id", "bimestre"] });
 
-    const resultados = await Promise.all(
-      lotes.map(lote =>
-        supabaseClient
-          .from("notas_frequencia")
-          .upsert(lote, { onConflict: ["aluno_id", "disciplina_id", "bimestre"] })
-      )
-    );
-
-    const errLote = resultados.find(r => r.error)?.error;
-    if (errLote) {
-      alert("Erro ao salvar: " + errLote.message);
-      console.error(errLote);
-      return;
+      if (errLote) {
+        alert("Erro ao salvar: " + errLote.message);
+        console.error(errLote);
+        return;
+      }
     }
 
     alert(`✅ ${registros.length} registros salvos com sucesso!`);
